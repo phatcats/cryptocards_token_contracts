@@ -20,7 +20,7 @@ const config = {
             mnemonic: {
                 owner: process.env.MAINNET_WALLET_MNEMONIC_OWNER
             },
-            accountIndex: 0
+            accountIndex: 1
         }
     },
 
