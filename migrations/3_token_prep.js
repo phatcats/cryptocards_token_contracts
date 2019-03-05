@@ -30,9 +30,9 @@ const _contractAddress = {
         gum   : '0xec0c563acba3074b72b3365c15164ccbeced07cb'
     },
     ropsten: {
-        packs : '0x6379844bb9458d88c75423c179f64beb3cbd6773',
-        cards : '0x9da3653f8d56893383c2fcbb359674e441d3779e',
-        gum   : '0x46d187ba4a979800807293b1fa77bb9e8a539dd7'
+        packs : '0xe08960423ff6ba89efcbca0b061712e1f3039fb1',
+        cards : '0x88050054406ce9a28032a285dee3cd82f9babda3',
+        gum   : '0x001fb4dc08b9326ec15264ddbd718b249570c0a8'
     },
     mainnet: {
         packs : '',
