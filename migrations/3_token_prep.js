@@ -35,9 +35,9 @@ const _contractAddress = {
         gum   : '0x001fb4dc08b9326ec15264ddbd718b249570c0a8'
     },
     mainnet: {
-        packs : '',
-        cards : '',
-        gum   : ''
+        packs : '0x9fe807eadeb031b133c099165c00cff519c32ac6',
+        cards : '0xe10f8f13addda57869cdf800aab4c0d5de9fa585',
+        gum   : '0x0a0c04e27c466e2dfc85eac947930a1fbc0cb6f3'
     }
 };
 
@@ -65,9 +65,9 @@ module.exports = async function(deployer, network, accounts) {
     Lib.log({separator: true});
 
     try {
-        const cryptoCardsPackToken = await CryptoCardsPackToken.deployed();
-        const cryptoCardsCardToken = await CryptoCardsCardToken.deployed();
-        const cryptoCardsGumToken = await CryptoCardsGumToken.deployed();
+        const cryptoCardsPackToken = await CryptoCardsPackToken.deployed(); // .at('0x0683e840ea22b089dafa0bf8c59f1a9690de7c12');
+        const cryptoCardsCardToken = await CryptoCardsCardToken.deployed(); // .at('0xcb35d14759e2931022c7315f53e37cdcd38e570c');
+        const cryptoCardsGumToken = await CryptoCardsGumToken.deployed(); // .at('0xaAFa4Bf1696732752a4AD4D27DD1Ea6793F24Fc0');
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Get Transaction Nonce
