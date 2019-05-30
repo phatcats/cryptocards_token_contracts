@@ -50,12 +50,6 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/access/roles/MinterRole.sol";
 import "./CryptoCardsERC721Batched.sol";
 
-contract OwnableDelegateProxy { }
-
-contract ProxyRegistry {
-    mapping(address => OwnableDelegateProxy) public proxies;
-}
-
 /**
  * @title Crypto-Cards ERC721 Card Token
  * ERC721-compliant token representing individual Cards
@@ -90,9 +84,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //  - balance of contract must always be >= than this value
     uint internal _wrappedEtherDemand;
 
-    // For registering token approvals through a proxy (OpenSea)
-    address internal _proxyRegistryAddress;
-
     // GUM Token Controller
     address internal _cryptoCardsGum;
 
@@ -103,7 +94,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     event CardPrinted(address indexed owner, uint256 tokenId);
     event CardMelted(address indexed owner, uint256 tokenId, uint256 wrappedEther, uint256 wrappedGum);
     event WrappedEtherDeposit(uint256 amount);
-
 
     //
     // Modifiers
@@ -212,16 +202,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return address(this).balance; // must always be >= demand
     }
 
-    function isApprovedForAll(address owner, address operator) public view returns (bool) {
-        // Whitelist OpenSea proxy contract for easy trading.
-        ProxyRegistry proxyRegistry = ProxyRegistry(_proxyRegistryAddress);
-        if (address(proxyRegistry.proxies(owner)) == operator) {
-            return true;
-        }
-
-        return super.isApprovedForAll(owner, operator);
-    }
-
     //
     // Only Minter
     //
@@ -290,7 +270,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     }
 
     function setProxyRegistryAddress(address proxy) public onlyOwner {
-        _proxyRegistryAddress = proxy;
+        _setProxyRegistryAddress(proxy);
     }
 
     function setWrappedEtherAmount(uint256 amount) public onlyOwner {

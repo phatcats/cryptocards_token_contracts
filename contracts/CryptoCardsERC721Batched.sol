@@ -18,13 +18,26 @@ contract IERC721BatchReceiver {
     public returns (bytes4);
 }
 
+contract OwnableDelegateProxy { }
+
+contract ProxyRegistry {
+    mapping(address => OwnableDelegateProxy) public proxies;
+}
+
 /**
  * @title Crypto-Cards ERC721-Batched Tokens
  */
 contract CryptoCardsERC721Batched is ERC721Enumerable {
+
+    //
+    // Storage
+    //
     string internal _tokenName;
     string internal _tokenSymbol;
     string internal _baseTokenURI;
+
+    // For registering token approvals through a proxy (OpenSea)
+    address internal _proxyRegistryAddress;
 
     bytes4 private constant _INTERFACE_ID_ERC721_BATCH = 0xd81081bb;
     /*
@@ -48,8 +61,14 @@ contract CryptoCardsERC721Batched is ERC721Enumerable {
      *     bytes4(keccak256("onERC721BatchReceived(address,address,uint256[],bytes)"))
      */
 
+    //
+    // Events
+    //
     event BatchTransfer(address from, address to, uint256[] tokenIds);
 
+    //
+    // Initialize
+    //
     constructor(string memory name, string memory symbol, string memory uri) public {
         _registerInterface(_INTERFACE_ID_ERC721_METADATA);
         _registerInterface(_INTERFACE_ID_ERC721_BATCH);
@@ -58,6 +77,10 @@ contract CryptoCardsERC721Batched is ERC721Enumerable {
         _tokenSymbol = symbol;
         _baseTokenURI = uri;
     }
+
+    //
+    // Public
+    //
 
     function name() external view returns (string memory) {
         return _tokenName;
@@ -100,6 +123,24 @@ contract CryptoCardsERC721Batched is ERC721Enumerable {
         _ownedTokensCount[to] = _ownedTokensCount[to].add(tokenIds.length);
 
         emit BatchTransfer(from, to, tokenIds);
+    }
+
+    function isApprovedForAll(address owner, address operator) public view returns (bool) {
+        // Whitelist OpenSea proxy contract for easy trading.
+        ProxyRegistry proxyRegistry = ProxyRegistry(_proxyRegistryAddress);
+        if (address(proxyRegistry.proxies(owner)) == operator) {
+            return true;
+        }
+
+        return super.isApprovedForAll(owner, operator);
+    }
+
+    //
+    // Private
+    //
+
+    function _setProxyRegistryAddress(address proxy) internal {
+        _proxyRegistryAddress = proxy;
     }
 
     function _mintBatch(address to, uint256[] memory tokenIds) internal {

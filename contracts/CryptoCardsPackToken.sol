@@ -21,14 +21,28 @@ import "./CryptoCardsERC721Batched.sol";
  */
 contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
+    //
+    // Storage
+    //
     mapping(uint256 => string) internal _packData;
 
+    //
+    // Initialize
+    //
     constructor() public CryptoCardsERC721Batched("Crypto-Cards Packs", "PACKS", "https://crypto-cards.io/pack-info/") { }
+
+    //
+    // Public
+    //
 
     function packDataById(uint256 tokenId) public view returns (string memory) {
         require(_exists(tokenId), "Invalid tokenId supplied");
         return _packData[tokenId];
     }
+
+    //
+    // Only Minter
+    //
 
     function mintPack(address to, string memory packData) public onlyMinter returns (uint256) {
         uint256 tokenId = totalSupply();
@@ -48,5 +62,13 @@ contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
     function tokenTransfer(address from, address to, uint256 tokenId) public onlyMinter {
         _transferFrom(from, to, tokenId);
+    }
+
+    //
+    // Only Owner
+    //
+
+    function setProxyRegistryAddress(address proxy) public onlyOwner {
+        _setProxyRegistryAddress(proxy);
     }
 }
