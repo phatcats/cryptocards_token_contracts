@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "dotenv": "^6.2.0",
-    "eth-gas-reporter": "^0.1.12",
+    "eth-gas-reporter": "^0.2.0",
     "ethereumjs-wallet": "^0.6.2",
     "lodash": "^4.17.11",
     "sol-merger": "^0.1.3",
