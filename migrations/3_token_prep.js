@@ -21,23 +21,26 @@ const CryptoCardsPackToken = artifacts.require('CryptoCardsPackToken');
 const CryptoCardsCardToken = artifacts.require('CryptoCardsCardToken');
 const CryptoCardsGumToken = artifacts.require('CryptoCardsGumToken');
 
-const _totalGumSupply = 3000000000; // billion
+const _totalGumSupply = 4000000000; // billion
 
 const _contractAddress = {
     local: {
-        packs : '0x22bb50a434e82716773cff9306c9f1d2fb65bfbc',
-        cards : '0xea1b680ffda06832e8f7f67f33491e68098aa631',
-        gum   : '0xec0c563acba3074b72b3365c15164ccbeced07cb'
+        packsCtrl : '0xfbb58f952c6e86da1719c5257b89e6c07b78c23f',
+        cardsCtrl : '0x22bb50a434e82716773cff9306c9f1d2fb65bfbc',
+        gumCtrl   : '0xea1b680ffda06832e8f7f67f33491e68098aa631',
+        gumDist   : '0xa51a7dd583669a958059362df2601197d8ee3b39'
     },
     ropsten: {
-        packs : '0xe08960423ff6ba89efcbca0b061712e1f3039fb1',
-        cards : '0x88050054406ce9a28032a285dee3cd82f9babda3',
-        gum   : '0x001fb4dc08b9326ec15264ddbd718b249570c0a8'
+        packsCtrl : '',
+        cardsCtrl : '',
+        gumCtrl   : '',
+        gumDist   : ''
     },
     mainnet: {
-        packs : '0x9fe807eadeb031b133c099165c00cff519c32ac6',
-        cards : '0xe10f8f13addda57869cdf800aab4c0d5de9fa585',
-        gum   : '0x0a0c04e27c466e2dfc85eac947930a1fbc0cb6f3'
+        packsCtrl : '',
+        cardsCtrl : '',
+        gumCtrl   : '',
+        gumDist   : ''
     }
 };
 
@@ -82,24 +85,27 @@ module.exports = async function(deployer, network, accounts) {
         Lib.log({spacer: true});
         Lib.log({msg: '-- Mint Total Supply of GUM Tokens (ERC20) --'});
         Lib.log({msg: `Total Supply: ${_totalGumSupply}`, indent: 1});
-        Lib.log({msg: `Gum Contract Address: ${contractAddress.gum}`, indent: 1});
-        receipt = await cryptoCardsGumToken.mintTotalSupply(_totalGumSupply, contractAddress.gum, _getTxOptions());
+        Lib.log({msg: `Initial Holder (Gum Distributor): ${contractAddress.gumDist}`, indent: 1});
+        receipt = await cryptoCardsGumToken.mintTotalSupply(_totalGumSupply, contractAddress.gumDist, _getTxOptions());
         Lib.logTxResult(receipt);
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Set Packs Minter
         Lib.log({spacer: true});
         Lib.log({msg: '-- Add Pack Token-Minter --'});
-        Lib.log({msg: `Packs Contract Address: ${contractAddress.packs}`, indent: 1});
-        receipt = await cryptoCardsPackToken.addMinter(contractAddress.packs, _getTxOptions());
+        Lib.log({msg: `Packs Contract Address: ${contractAddress.packsCtrl}`, indent: 1});
+        receipt = await cryptoCardsPackToken.addMinter(contractAddress.packsCtrl, _getTxOptions());
         Lib.logTxResult(receipt);
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Set Cards Minter
         Lib.log({spacer: true});
         Lib.log({msg: '-- Add Card Token-Minter --'});
-        Lib.log({msg: `Cards Contract Address: ${contractAddress.cards}`, indent: 1});
-        receipt = await cryptoCardsCardToken.addMinter(contractAddress.cards, _getTxOptions());
+        Lib.log({msg: `Packs Contract Address: ${contractAddress.packsCtrl}`, indent: 1});
+        receipt = await cryptoCardsCardToken.addMinter(contractAddress.packsCtrl, _getTxOptions());
+        Lib.logTxResult(receipt);
+        Lib.log({msg: `Cards Contract Address: ${contractAddress.cardsCtrl}`, indent: 1});
+        receipt = await cryptoCardsCardToken.addMinter(contractAddress.cardsCtrl, _getTxOptions());
         Lib.logTxResult(receipt);
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

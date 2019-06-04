@@ -23,14 +23,15 @@ contract CryptoCardsGumToken is CryptoCardsERC20, MinterRole, Ownable {
     constructor() public CryptoCardsERC20("Crypto-Cards Gum", "GUM", 18, 3000000000 * (10**18)) {}
 
     // 3 Billion, Total Supply
+    //  - initialHolder = CryptoCardsGumDistribution Contract
     function mintTotalSupply(uint256 totalSupply, address initialHolder) public onlyOwner {
         _mint(initialHolder, totalSupply * (10**18));
     }
 
-//    function transferFor(address from, address to, uint256 value) public onlyMinter {
-//        _transfer(from, to, value);
-//    }
-//
+    function transferFor(address from, address to, uint256 value) public onlyMinter {
+        _transfer(from, to, value);
+    }
+
 //    function fastTransferFor(address to, uint256 value) public onlyMinter {
 //        _fastTransfer(msg.sender, to, value);
 //    }
