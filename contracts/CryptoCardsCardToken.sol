@@ -10,14 +10,20 @@
  */
 /*
     BIT-MAP:
-                 T                 GM       I     S   C   R   G  Y
-                140                32       32    12  8   16  8  8
-[______________________________|________|________|___|__|____|__|__]
+             T                 E        GM       I     S   C   R   G  Y
+             108               32       32       32    12  8   16  8  8
+[__________________________|________|________|________|___|__|____|__|__]
 
 
 
-140 bits for
+108 bits for
 	- card traits, badges
+
+32 bits for  (max 2,147,483,647)
+	- wrapped ether (divided by 1,000,000)
+		2147483647 / 1000000 = 2147.483647
+		     10000 / 1000000 = 0.01
+		         1 / 1000000 = 0.000001
 
 32 bits for  (max 2,147,483,647)
 	- Wrapped GUM amount
@@ -56,6 +62,7 @@ import "./CryptoCardsERC721Batched.sol";
  */
 contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     uint256 public constant START_YEAR = 2019;
+    uint internal constant ETH_DIV = 1000000;
 
     //
     // Storage
@@ -71,15 +78,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //  - to be paid out by claiming from the DAPP
     mapping(address => uint) internal _earnedGum;
 
-    // The amount of ETH wrapped in a Token
-    //  - paid immediately on melting or printing
-    mapping(uint => uint) internal _wrappedEtherAmount;
-
-    // During any given cycle, some random cards will have Wrapped ETH
-    //  - this is the amount of ETH those random cards will each receive
-    //  - can be changed with every cycle
-    uint internal _wrappedEtherPerCard;
-
     // The amount of ETH wrapped in existing Tokens and not yet paid out
     //  - balance of contract must always be >= than this value
     uint internal _wrappedEtherDemand;
@@ -90,7 +88,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //
     // Events
     //
-    event CardsCombined(address indexed owner, uint256 tokenA, uint256 tokenB);
+    event CardsCombined(address indexed owner, uint256 tokenA, uint256 tokenB, uint256 newTokenId);
     event CardPrinted(address indexed owner, uint256 tokenId);
     event CardMelted(address indexed owner, uint256 tokenId, uint256 wrappedEther, uint256 wrappedGum);
     event WrappedEtherDeposit(uint256 amount);
@@ -155,8 +153,13 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     }
 
     // Default 0
+    function getWrappedEther(uint256 tokenId) public pure returns (uint) {
+        return _getWrappedEtherRaw(tokenId).mul(1 ether).div(ETH_DIV);
+    }
+
+    // Default 0
     function getTraits(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 116, 156));
+        return uint(_readBits(tokenId, 148, 108));
     }
 
     function hasTrait(uint256 tokenId, uint256 trait) public pure returns (bool) {
@@ -210,6 +213,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         // Mint Tokens
         _mintBatch(to, tokenIds);
 
+        uint wrappedEth;
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint t = tokenIds[i];
             (uint y, uint g, uint r) = getTypeIndicators(t);
@@ -217,12 +221,10 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
             // Track Total Issued
             _totalIssued[y][g][r] = _totalIssued[y][g][r] + 1;
 
-            // Attach Wrapped Ether (if any)
-            if (hasTrait(t, 1)) {
-                _wrappedEtherAmount[t] = _wrappedEtherPerCard;
-                _wrappedEtherDemand = _wrappedEtherDemand.add(_wrappedEtherPerCard);
-            }
+            // Track Wrapped Ether (if any)
+            wrappedEth = wrappedEth.add(getWrappedEther(t));
         }
+        _wrappedEtherDemand = _wrappedEtherDemand.add(wrappedEth);
     }
 
     function printFor(address owner, uint256 tokenId) public onlyMinter {
@@ -273,10 +275,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _setProxyRegistryAddress(proxy);
     }
 
-    function setWrappedEtherAmount(uint256 amount) public onlyOwner {
-        _wrappedEtherPerCard = amount;
-    }
-
     function depositWrappedEther(uint256 amount) public payable onlyOwner {
         require(amount == msg.value, "Specified amount does not match actual amount received");
         emit WrappedEtherDeposit(amount);
@@ -299,17 +297,12 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         uint256 newTokenId = _generateCombinedToken(tokenA, tokenB);
         _mint(owner, newTokenId);
 
-        // Combine Wrapped Ether
-        _wrappedEtherAmount[newTokenId] = _wrappedEtherAmount[tokenA].add(_wrappedEtherAmount[tokenB]);
-        _wrappedEtherAmount[tokenA] = 0;
-        _wrappedEtherAmount[tokenB] = 0;
-
         // Burn Old Tokens
         _burn(owner, tokenA);
         _burn(owner, tokenB);
 
         // Emit Event
-        emit CardsCombined(owner, tokenA, tokenB);
+        emit CardsCombined(owner, tokenA, tokenB, newTokenId);
 
         return newTokenId;
     }
@@ -349,7 +342,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
     function _getWrappedEtherAmount(uint256 tokenId) private view returns (address, uint256) {
         address owner = ownerOf(tokenId); // will revert if owner == address(0)
-        uint wrappedEth = _wrappedEtherAmount[tokenId];
+        uint256 wrappedEth = getWrappedEther(tokenId);
         // This should never happen, but just in case..
         require(wrappedEth <= address(this).balance, "Not enough funds to pay out wrapped ether, please try again later.");
         return (owner, wrappedEth);
@@ -363,14 +356,13 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     function _payoutWrappedEther(uint256 tokenId, address owner, uint wrappedEth) private {
         if (wrappedEth > 0) {
             address payable wallet = address(uint160(owner));
-            _wrappedEtherAmount[tokenId] = 0;
             _wrappedEtherDemand = _wrappedEtherDemand.sub(wrappedEth);
             wallet.transfer(wrappedEth);
         }
     }
 
-    function _generateTokenId(uint y, uint g, uint r, uint c, uint s, uint i, uint gm, uint t) private pure returns (uint256) {
-        return uint256(y) | (uint256(g) << 8) | (uint256(r) << 16) | (uint256(c) << 32) | (uint256(s) << 40) | (uint256(i) << 52) | (uint256(gm) << 84) | (uint256(t) << 116);
+    function _generateTokenId(uint y, uint g, uint r, uint c, uint s, uint i, uint gm, uint e, uint t) private pure returns (uint256) {
+        return uint256(y) | (uint256(g) << 8) | (uint256(r) << 16) | (uint256(c) << 32) | (uint256(s) << 40) | (uint256(i) << 52) | (uint256(gm) << 84) | (uint256(e) << 116) | (uint256(t) << 148);
     }
 
     function _generateCombinedToken(uint256 tokenA, uint256 tokenB) private returns (uint256) {
@@ -381,11 +373,17 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         uint cB = getCombinedCount(tokenB);
         uint i = _totalIssued[y][g][r].add(1);
         uint gm = getWrappedGum(tokenA).add(getWrappedGum(tokenB));
+        uint e = _getWrappedEtherRaw(tokenA).add(_getWrappedEtherRaw(tokenB));
         uint t = getTraits(tokenA) | getTraits(tokenB);
 
         _totalIssued[y][g][r] = i; // Update Max-Issue for New Token Generation
 
-        return _generateTokenId(y, g, r, ((cA > cB ? cB : cA) + 1), 0, i, gm, t);
+        return _generateTokenId(y, g, r, ((cA > cB ? cB : cA) + 1), 0, i, gm, e, t);
+    }
+
+    // Default 0
+    function _getWrappedEtherRaw(uint256 tokenId) private pure returns (uint) {
+        return uint(_readBits(tokenId, 116, 32));
     }
 
     function _traitByIndex(uint256 index) private pure returns (uint256) {
