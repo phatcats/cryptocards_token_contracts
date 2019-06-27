@@ -21,7 +21,7 @@ const CryptoCardsPackToken = artifacts.require('CryptoCardsPackToken');
 const CryptoCardsCardToken = artifacts.require('CryptoCardsCardToken');
 const CryptoCardsGumToken = artifacts.require('CryptoCardsGumToken');
 
-const _totalGumSupply = 4000000000; // billion
+const _totalGumSupply = 3000000; // million
 
 const _contractAddress = {
     local: {
@@ -31,10 +31,10 @@ const _contractAddress = {
         gumDist   : '0xa51a7dd583669a958059362df2601197d8ee3b39'
     },
     ropsten: {
-        packsCtrl : '',
-        cardsCtrl : '',
-        gumCtrl   : '',
-        gumDist   : ''
+        packsCtrl : '0xcc13defed4e3d01d5c5c6b299c53d10f64f82450',
+        cardsCtrl : '0xc06c0f34f8ce808b3137b9e8601728dfefddbc8f',
+        gumCtrl   : '0xe4d93bec3bbfefa5ddac3428fabfd5db68d89405',
+        gumDist   : '0x7456ebfdb2c81b5335566863755507b465a2371f'
     },
     mainnet: {
         packsCtrl : '',

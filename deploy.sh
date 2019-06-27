@@ -15,7 +15,7 @@ migration=
 networkName="local"
 
 usage() {
-    echo "usage: ./deploy.sh [[-n [local|ropsten|mainnet] [-f] [-v]] | [-h]]"
+    echo "usage: ./deploy.sh [[-n [local|ropsten|mainnet] [-f]] | [-h]]"
     echo "  -n | --network [local|ropsten|mainnet]    Deploys contracts to the specified network (default is local)"
     echo "  -f | --fresh                              Run all deployments from the beginning, instead of updating"
     echo "  -i | --initialize                         Run Contract Initializations"

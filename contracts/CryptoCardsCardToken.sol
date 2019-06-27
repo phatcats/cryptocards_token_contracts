@@ -330,7 +330,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _burn(owner, tokenId);
 
         // Transfer Wrapped Ether
-        _payoutWrappedEther(tokenId, owner, wrappedEth);
+        _payoutWrappedEther(owner, wrappedEth);
 
         // Store amount of GUM earned from melting
         uint wrappedGum = getWrappedGum(tokenId);
@@ -350,10 +350,10 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
     function _payoutWrappedEther(uint256 tokenId) private {
         (address owner, uint wrappedEth) = _getWrappedEtherAmount(tokenId);
-        _payoutWrappedEther(tokenId, owner, wrappedEth);
+        _payoutWrappedEther(owner, wrappedEth);
     }
 
-    function _payoutWrappedEther(uint256 tokenId, address owner, uint wrappedEth) private {
+    function _payoutWrappedEther(address owner, uint wrappedEth) private {
         if (wrappedEth > 0) {
             address payable wallet = address(uint160(owner));
             _wrappedEtherDemand = _wrappedEtherDemand.sub(wrappedEth);
@@ -361,8 +361,12 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         }
     }
 
-    function _generateTokenId(uint y, uint g, uint r, uint c, uint s, uint i, uint gm, uint e, uint t) private pure returns (uint256) {
-        return uint256(y) | (uint256(g) << 8) | (uint256(r) << 16) | (uint256(c) << 32) | (uint256(s) << 40) | (uint256(i) << 52) | (uint256(gm) << 84) | (uint256(e) << 116) | (uint256(t) << 148);
+//    function _generateTokenId(uint y, uint g, uint r, uint c, uint s, uint i, uint gm, uint e, uint t) private pure returns (uint256) {
+//        return uint256(y) | (uint256(g) << 8) | (uint256(r) << 16) | (uint256(c) << 32) | (uint256(s) << 40) | (uint256(i) << 52) | (uint256(gm) << 84) | (uint256(e) << 116) | (uint256(t) << 148);
+//    }
+
+    function _generateTokenId(uint[9] memory bits) private pure returns (uint256) {
+        return uint256(bits[0]) | (uint256(bits[1]) << 8) | (uint256(bits[2]) << 16) | (uint256(bits[3]) << 32) | (uint256(bits[4]) << 40) | (uint256(bits[5]) << 52) | (uint256(bits[6]) << 84) | (uint256(bits[7]) << 116) | (uint256(bits[8]) << 148);
     }
 
     function _generateCombinedToken(uint256 tokenA, uint256 tokenB) private returns (uint256) {
@@ -372,13 +376,26 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         uint cA = getCombinedCount(tokenA);
         uint cB = getCombinedCount(tokenB);
         uint i = _totalIssued[y][g][r].add(1);
-        uint gm = getWrappedGum(tokenA).add(getWrappedGum(tokenB));
-        uint e = _getWrappedEtherRaw(tokenA).add(_getWrappedEtherRaw(tokenB));
-        uint t = getTraits(tokenA) | getTraits(tokenB);
+//        uint gm = getWrappedGum(tokenA).add(getWrappedGum(tokenB));
+//        uint e = _getWrappedEtherRaw(tokenA).add(_getWrappedEtherRaw(tokenB));
+//        uint t = getTraits(tokenA) | getTraits(tokenB);
+
+        uint[9] memory bits = [
+            y,
+            g,
+            r,
+            ((cA > cB ? cB : cA) + 1),
+            0,
+            i,
+            getWrappedGum(tokenA).add(getWrappedGum(tokenB)),
+            _getWrappedEtherRaw(tokenA).add(_getWrappedEtherRaw(tokenB)),
+            getTraits(tokenA) | getTraits(tokenB)
+        ];
 
         _totalIssued[y][g][r] = i; // Update Max-Issue for New Token Generation
 
-        return _generateTokenId(y, g, r, ((cA > cB ? cB : cA) + 1), 0, i, gm, e, t);
+//        return _generateTokenId(y, g, r, ((cA > cB ? cB : cA) + 1), 0, i, gm, e, t);
+        return _generateTokenId(bits);
     }
 
     // Default 0

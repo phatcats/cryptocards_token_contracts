@@ -20,7 +20,7 @@ import "./CryptoCardsERC20.sol";
  * ERC20-compliant token representing Pack-Gum
  */
 contract CryptoCardsGumToken is CryptoCardsERC20, MinterRole, Ownable {
-    constructor() public CryptoCardsERC20("Crypto-Cards Gum", "GUM", 18, 3000000000 * (10**18)) {}
+    constructor() public CryptoCardsERC20("Crypto-Cards Gum", "GUM", 18, 3000000 * (10**18)) {}
 
     // 3 Billion, Total Supply
     //  - initialHolder = CryptoCardsGumDistribution Contract

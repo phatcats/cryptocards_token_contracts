@@ -56,4 +56,10 @@ contract CryptoCardsERC20 is ERC20 {
     function cap() public view returns (uint256) {
         return _cap;
     }
+
+
+    function _mint(address account, uint256 value) internal {
+        require(totalSupply().add(value) <= _cap, "Exceeds token cap");
+        super._mint(account, value);
+    }
 }
