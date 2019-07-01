@@ -11,7 +11,6 @@
 
 freshLoad=
 initialize=
-migration=
 networkName="local"
 
 usage() {
@@ -19,7 +18,6 @@ usage() {
     echo "  -n | --network [local|ropsten|mainnet]    Deploys contracts to the specified network (default is local)"
     echo "  -f | --fresh                              Run all deployments from the beginning, instead of updating"
     echo "  -i | --initialize                         Run Contract Initializations"
-    echo "  -m | --migrate                            Run Token Migration Script"
     echo "  -h | --help                               Displays this help screen"
 }
 
@@ -57,12 +55,6 @@ runInitializations() {
     truffle migrate -f 3 --to 3 --network "$networkName"
 }
 
-runMigrations() {
-    echoHeader
-    echo "Running Token Migrations..."
-    truffle migrate -f 4 --to 4 --network "$networkName"
-}
-
 
 while [ "$1" != "" ]; do
     case $1 in
@@ -72,8 +64,6 @@ while [ "$1" != "" ]; do
         -f | --fresh )          freshLoad="yes"
                                 ;;
         -i | --initialize )     initialize="yes"
-                                ;;
-        -m | --migrate )        migration="yes"
                                 ;;
         -h | --help )           usage
                                 exit
@@ -88,8 +78,6 @@ if [ -n "$freshLoad" ]; then
     deployFresh
 elif [ -n "$initialize" ]; then
     runInitializations
-elif [ -n "$migration" ]; then
-    runMigrations
 else
     usage
 fi
