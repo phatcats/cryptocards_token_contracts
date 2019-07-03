@@ -227,7 +227,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _wrappedEtherDemand = _wrappedEtherDemand.add(wrappedEth);
     }
 
-    function _mintCard(address to, uint256 tokenId) public onlyMinter {
+    function mintCard(address to, uint256 tokenId) public onlyMinter {
         // Mint Tokens
         _mint(to, tokenId);
 

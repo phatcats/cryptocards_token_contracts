@@ -50,19 +50,19 @@ const config = {
             packsCtrl : '0xfbb58f952c6e86da1719c5257b89e6c07b78c23f',
             cardsCtrl : '0x22bb50a434e82716773cff9306c9f1d2fb65bfbc',
             gumCtrl   : '0xea1b680ffda06832e8f7f67f33491e68098aa631',
-            gumDist   : '0xa51a7dd583669a958059362df2601197d8ee3b39'
+            migrator  : '0xa51a7dd583669a958059362df2601197d8ee3b39'
         },
         ropsten: {
-            packsCtrl : '0x702ab2e9b620424ab95a3829fee8c32bf109c418',
-            cardsCtrl : '0x2c27979afd0619a4920f45780fa8520bc2067e66',
-            gumCtrl   : '0x3738a67a9db1b6bf523a8f9234c7c38631019bcf',
-            gumDist   : '0x217cbdfcca3b87b2c62d7986e9c693f4b593d0fc'
+            packsCtrl : '0xf4f5b329739acf2d173281135a05a46903dacd6d',
+            cardsCtrl : '0x17927e8b8524ac46c169320b944a5ad4942690ef',
+            gumCtrl   : '0xb1013e7633f78ac2a4815ac1015750a2d9561b2b',
+            migrator  : '0xfd4d884de113d1945737250e83ba8135bf322f90'
         },
         mainnet: {
             packsCtrl : '',
             cardsCtrl : '',
             gumCtrl   : '',
-            gumDist   : ''
+            migrator  : ''
         }
     },
 

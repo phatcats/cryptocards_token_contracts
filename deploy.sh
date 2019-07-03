@@ -27,6 +27,10 @@ echoHeader() {
     echo "-----------------------------------------------------------"
 }
 
+echoBeep() {
+    afplay /System/Library/Sounds/Glass.aiff
+}
+
 deployFresh() {
     echoHeader
     echo "Deploying Token Contracts"
@@ -47,12 +51,14 @@ deployFresh() {
     echoHeader
     echo "Contract Deployment Complete!"
     echo " "
+    echoBeep
 }
 
 runInitializations() {
     echoHeader
     echo "Running Contract Initializations..."
     truffle migrate -f 3 --to 3 --network "$networkName"
+    echoBeep
 }
 
 

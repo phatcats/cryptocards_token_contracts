@@ -64,8 +64,8 @@ module.exports = async function(deployer, network, accounts) {
         Lib.log({spacer: true});
         Lib.log({msg: '-- Mint Total Supply of GUM Tokens (ERC20) --'});
         Lib.log({msg: `Total Supply: ${_totalGumSupply}`, indent: 1});
-        Lib.log({msg: `Initial Holder (Gum Distributor): ${contractAddress.gumDist}`, indent: 1});
-        receipt = await cryptoCardsGumToken.mintTotalSupply(_totalGumSupply, contractAddress.gumDist, _getTxOptions());
+        Lib.log({msg: `Initial Holder (Token Migrator): ${contractAddress.migrator}`, indent: 1});
+        receipt = await cryptoCardsGumToken.mintTotalSupply(_totalGumSupply, contractAddress.migrator, _getTxOptions());
         Lib.logTxResult(receipt);
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,6 +74,9 @@ module.exports = async function(deployer, network, accounts) {
         Lib.log({msg: '-- Add Pack Token-Minter --'});
         Lib.log({msg: `Packs Contract Address: ${contractAddress.packsCtrl}`, indent: 1});
         receipt = await cryptoCardsPackToken.addMinter(contractAddress.packsCtrl, _getTxOptions());
+        Lib.logTxResult(receipt);
+        Lib.log({msg: `Migrator Contract Address: ${contractAddress.migrator}`, indent: 1});
+        receipt = await cryptoCardsPackToken.addMinter(contractAddress.migrator, _getTxOptions());
         Lib.logTxResult(receipt);
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -85,6 +88,9 @@ module.exports = async function(deployer, network, accounts) {
         Lib.logTxResult(receipt);
         Lib.log({msg: `Cards Contract Address: ${contractAddress.cardsCtrl}`, indent: 1});
         receipt = await cryptoCardsCardToken.addMinter(contractAddress.cardsCtrl, _getTxOptions());
+        Lib.logTxResult(receipt);
+        Lib.log({msg: `Migrator Contract Address: ${contractAddress.migrator}`, indent: 1});
+        receipt = await cryptoCardsCardToken.addMinter(contractAddress.migrator, _getTxOptions());
         Lib.logTxResult(receipt);
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
