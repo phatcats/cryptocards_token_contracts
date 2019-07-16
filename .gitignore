@@ -11,3 +11,5 @@ merged/
 node_modules/
 .coverage
 .env
+erc721x/
+erc1155/

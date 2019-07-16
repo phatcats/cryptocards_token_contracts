@@ -29,6 +29,10 @@ contract CryptoCardsERC20 is ERC20 {
         _cap = cap;
     }
 
+    function getVersion() public pure returns (string memory) {
+        return "v2.1.2";
+    }
+
     /**
      * @return the name of the token.
      */

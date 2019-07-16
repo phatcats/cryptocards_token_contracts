@@ -60,9 +60,9 @@ contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _packData[tokenId] = "";
     }
 
-    function tokenTransfer(address from, address to, uint256 tokenId) public onlyMinter {
-        _transferFrom(from, to, tokenId);
-    }
+//    function tokenTransfer(address from, address to, uint256 tokenId) public onlyMinter {
+//        _transferFrom(from, to, tokenId);
+//    }
 
     //
     // Only Owner

@@ -10,43 +10,31 @@
  */
 /*
     BIT-MAP:
-             T                 E        GM       I     S   C   R   G  Y
-             108               32       32       32    12  8   16  8  8
-[__________________________|________|________|________|___|__|____|__|__]
+      E       G    I   R   G  Y
+      22      10   12  10  6  4
+[____________|___|____|___|__|_]
 
 
-
-108 bits for
-	- card traits, badges
-
-32 bits for  (max 2,147,483,647)
+22 bits for (max 4,194,304)
 	- wrapped ether (divided by 1,000,000)
-		2147483647 / 1000000 = 2147.483647
-		     10000 / 1000000 = 0.01
-		         1 / 1000000 = 0.000001
+         4194304 / 1000000 = 4.194304
+		   10000 / 1000000 = 0.01
+		       1 / 1000000 = 0.000001
 
-32 bits for  (max 2,147,483,647)
-	- Wrapped GUM amount
-
-32 bits for  (max 2,147,483,647)
-	- card issue
+10 bits for  (max 1,024)
+	- wrapped gum
 
 12 bits for  (max 4,096)
-	- specialty/chase/sponsor cards  (not a crypto logo)
-	- not combinable
-	- extra gum?
+	- card issue
 
-8 bits for (max 256)
-	- combined count (default 0)
-
-16 bits for (max 65,536)
+10 bits for  (max 1,024)
 	- card rank
 
-8 bits for  (max 256)
+6 bits for  (max 64)
 	- current generation
 
-8 bits for (max 256)
-	- year of issue ([20]19, [20]20, etc..)
+4 bits for (max 16)
+	- year of issue (0 = 2019)
 
 */
 
@@ -61,20 +49,24 @@ import "./CryptoCardsERC721Batched.sol";
  * ERC721-compliant token representing individual Cards
  */
 contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
-    uint256 public constant START_YEAR = 2019;
-    uint internal constant ETH_DIV = 1000000;
+//    uint public constant START_YEAR = 2019;
+//    uint internal constant ETH_DIV = 1000000;
+//    uint internal constant ETH_MAX = 4194304;
 
     //
     // Storage
     //
-
     // Total Cards Issued by year => gen => rank
-    mapping(uint => mapping(uint => mapping(uint => uint))) internal _totalIssued;
+    mapping(uint64 => mapping(uint64 => mapping(uint64 => uint64))) internal _totalIssued;
 
     // Tokens that have been printed
     mapping(uint => bool) internal _printedTokens;
 
-    // The amount of GUM tokens earned by an address from melting or printing cards
+    // The amount of ETH earned by an address from melting, combining or printing cards
+    //  - to be paid out by claiming from the DAPP
+    mapping(address => uint) internal _earnedEth;
+
+    // The amount of GUM tokens earned by an address from melting cards
     //  - to be paid out by claiming from the DAPP
     mapping(address => uint) internal _earnedGum;
 
@@ -88,10 +80,10 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //
     // Events
     //
-    event CardsCombined(address indexed owner, uint256 tokenA, uint256 tokenB, uint256 newTokenId);
-    event CardPrinted(address indexed owner, uint256 tokenId);
-    event CardMelted(address indexed owner, uint256 tokenId, uint256 wrappedEther, uint256 wrappedGum);
-    event WrappedEtherDeposit(uint256 amount);
+    event CardsCombined(address indexed owner, uint tokenA, uint tokenB, uint newTokenId);
+    event CardPrinted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum);
+    event CardMelted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum);
+    event WrappedEtherDeposit(uint amount);
 
     //
     // Modifiers
@@ -111,166 +103,165 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //
 
     // Starts at 0, must add START_YEAR  (ie 0 + 2019)
-    function getYear(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 0, 8));
+    function getYear(uint tokenId) public pure returns (uint64) {
+        return _readBits(tokenId, 0, 4);
     }
 
     // Starts at 0
-    function getGeneration(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 8, 8));
+    function getGeneration(uint tokenId) public pure returns (uint64) {
+        return _readBits(tokenId, 4, 6);
     }
 
     // Starts at 0
-    function getRank(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 16, 16));
+    function getRank(uint tokenId) public pure returns (uint64) {
+        return _readBits(tokenId, 4, 6);
     }
 
-    function getTypeIndicators(uint256 tokenId) public pure returns (uint, uint, uint) {
-        uint y = uint(_readBits(tokenId, 0, 8));
-        uint g = uint(_readBits(tokenId, 8, 8));
-        uint r = uint(_readBits(tokenId, 16, 16));
+    // Starts at 1
+    function getIssue(uint tokenId) public pure returns (uint64) {
+        return _readBits(tokenId, 20, 12);
+    }
+
+    function getTypeIndicators(uint tokenId) public pure returns (uint64, uint64, uint64) {
+        uint64 y = getYear(tokenId);
+        uint64 g = getGeneration(tokenId);
+        uint64 r = getRank(tokenId);
         return (y, g, r);
     }
 
     // Default 0
-    function getCombinedCount(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 32, 8));
+    function getWrappedGum(uint tokenId) public pure returns (uint64) {
+        return _readBits(tokenId, 32, 10);
     }
 
     // Default 0
-    function getSpecialty(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 40, 12));
+    function getWrappedEther(uint tokenId) public pure returns (uint) {
+        return _convertToEther(_getWrappedEtherRaw(tokenId));
     }
 
-    // Starts at 1
-    function getIssue(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 52, 32));
-    }
-
-    // Default 0
-    function getWrappedGum(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 84, 32));
-    }
-
-    // Default 0
-    function getWrappedEther(uint256 tokenId) public pure returns (uint) {
-        return _getWrappedEtherRaw(tokenId).mul(1 ether).div(ETH_DIV);
-    }
-
-    // Default 0
-    function getTraits(uint256 tokenId) public pure returns (uint) {
-        return uint(_readBits(tokenId, 148, 108));
-    }
-
-    function hasTrait(uint256 tokenId, uint256 trait) public pure returns (bool) {
-        return getTraits(tokenId) & trait == trait;
-    }
-
-    function getTotalIssued(uint256 tokenId) public view returns (uint) {
-        uint y = getYear(tokenId);
-        uint g = getGeneration(tokenId);
-        uint r = getRank(tokenId);
+    function getTotalIssued(uint tokenId) public view returns (uint64) {
+        (uint64 y, uint64 g, uint64 r) = getTypeIndicators(tokenId);
         return _totalIssued[y][g][r];
     }
 
-    function isTokenPrinted(uint256 tokenId) public view returns (bool) {
+    function isTokenPrinted(uint tokenId) public view returns (bool) {
         return _printedTokens[tokenId];
     }
 
-    function canCombine(uint256 tokenA, uint256 tokenB) public view returns (bool) {
+    function canCombine(uint tokenA, uint tokenB) public view returns (bool) {
         if (isTokenPrinted(tokenA) || isTokenPrinted(tokenB)) { return false; }
         if (getGeneration(tokenA) < 1) { return false; }
-        if (getSpecialty(tokenA) > 0) { return false; }
 
-        uint32 typeA = uint32(_readBits(tokenA, 0, 32));
-        uint32 typeB = uint32(_readBits(tokenB, 0, 32));
+        uint32 typeA = uint32(_readBits(tokenA, 0, 20)); // y, g, r
+        uint32 typeB = uint32(_readBits(tokenB, 0, 20)); // y, g, r
         return (typeA == typeB);
     }
 
-    function combine(uint256 tokenA, uint256 tokenB) public returns (uint256) {
+    function combine(uint tokenA, uint tokenB) public returns (uint) {
         require(msg.sender == ownerOf(tokenA), "You do not own one of these Cards"); // tokenB is verified via _combineTokens
         return _combineTokens(tokenA, tokenB);
     }
 
-    function melt(uint256 tokenId) public {
+    function melt(uint tokenId) public {
         require(msg.sender == ownerOf(tokenId), "You do not own this Card");
         _meltToken(tokenId);
     }
 
-    function getEarnedGum(address owner) public view returns (uint256) {
+    function getEarnedGum(address owner) public view returns (uint) {
         return _earnedGum[owner];
     }
 
-    function getWrappedEtherSupply() public view returns (uint256) {
-        return address(this).balance; // must always be >= demand
+    function getEarnedEther(address owner) public view returns (uint) {
+        return _earnedEth[owner];
     }
+
+    function claimEarnedEther() public payable {
+        address payable owner = msg.sender;
+        uint _ether = _earnedEth[owner];
+        require(_ether > 0, "You have not earned any Ether");
+
+        // This should never happen, but just in case..
+        require(_ether <= address(this).balance, "Not enough funds to pay out wrapped ether, please try again later.");
+
+        _wrappedEtherDemand = _wrappedEtherDemand - _ether;
+        _earnedEth[owner] = 0;
+
+        owner.transfer(_ether);
+    }
+
+//    function getWrappedEtherSupply() public view returns (uint) {
+//        return address(this).balance; // must always be >= demand
+//    }
 
     //
     // Only Minter
     //
 
-    function mintCardsFromPack(address to, uint256[] memory tokenIds) public onlyMinter {
+    function mintCardsFromPack(address to, uint[] memory tokenIds) public onlyMinter {
         // Mint Tokens
         _mintBatch(to, tokenIds);
 
-        uint wrappedEth;
-        for (uint256 i = 0; i < tokenIds.length; i++) {
+        uint totalWrappedEth;
+        for (uint i = 0; i < tokenIds.length; i++) {
             uint t = tokenIds[i];
-            (uint y, uint g, uint r) = getTypeIndicators(t);
+            (uint64 y, uint64 g, uint64 r) = getTypeIndicators(t);
 
             // Track Total Issued
             _totalIssued[y][g][r] = _totalIssued[y][g][r] + 1;
 
             // Track Wrapped Ether (if any)
-            wrappedEth = wrappedEth.add(getWrappedEther(t));
+            totalWrappedEth = totalWrappedEth + getWrappedEther(t);
         }
-        _wrappedEtherDemand = _wrappedEtherDemand.add(wrappedEth);
+        if (totalWrappedEth > 0) {
+            _wrappedEtherDemand = _wrappedEtherDemand + totalWrappedEth;
+        }
     }
 
-    function mintCard(address to, uint256 tokenId) public onlyMinter {
+    function mintCard(address to, uint tokenId) public onlyMinter {
         // Mint Tokens
         _mint(to, tokenId);
 
         uint wrappedEth;
-        (uint y, uint g, uint r) = getTypeIndicators(tokenId);
+        (uint64 y, uint64 g, uint64 r) = getTypeIndicators(tokenId);
 
         // Track Total Issued
         _totalIssued[y][g][r] = _totalIssued[y][g][r] + 1;
 
         // Track Wrapped Ether (if any)
-        wrappedEth = wrappedEth.add(getWrappedEther(tokenId));
-        _wrappedEtherDemand = _wrappedEtherDemand.add(wrappedEth);
+        wrappedEth = wrappedEth + getWrappedEther(tokenId);
+        _wrappedEtherDemand = _wrappedEtherDemand + wrappedEth;
     }
 
-    function printFor(address owner, uint256 tokenId) public onlyMinter {
+    function printFor(address owner, uint tokenId) public onlyMinter {
         require(owner == ownerOf(tokenId), "User does not own this Card");
         _printToken(owner, tokenId);
     }
 
-    function combineFor(address owner, uint256 tokenA, uint256 tokenB) public onlyMinter returns (uint256) {
-        require(owner == ownerOf(tokenA), "User does not own this Card"); // tokenB is verified via _combineTokens
-        return _combineTokens(tokenA, tokenB);
-    }
-
-    function meltFor(address owner, uint256 tokenId) public onlyMinter {
-        require(owner == ownerOf(tokenId), "User does not own this Card");
-        _meltToken(tokenId);
-    }
+//    function combineFor(address owner, uint tokenA, uint tokenB) public onlyMinter returns (uint) {
+//        require(owner == ownerOf(tokenA), "User does not own this Card"); // tokenB is verified via _combineTokens
+//        return _combineTokens(tokenA, tokenB);
+//    }
+//
+//    function meltFor(address owner, uint tokenId) public onlyMinter {
+//        require(owner == ownerOf(tokenId), "User does not own this Card");
+//        _meltToken(tokenId);
+//    }
 
     /* ???????????????????????????? */
     /* QUESTIONABLE for MINTER ROLE */
-    function tokenTransfer(address from, address to, uint256 tokenId) public onlyMinter {
-        _transferFrom(from, to, tokenId);
-    }
+//    function tokenTransfer(address from, address to, uint tokenId) public onlyMinter {
+//        _transferFrom(from, to, tokenId);
+//    }
     /* ???????????????????????????? */
 
     //
     // Only GUM Controller
     //
 
-    function claimEarnedGum(address owner, uint256 amountClaimed) public onlyGumController {
+    // Gum is Claimed by Owners via the Gum Controller; this function just clears the stored value
+    function claimEarnedGum(address owner, uint amountClaimed) public onlyGumController {
         require(amountClaimed <= _earnedGum[owner], "Not enough GUM earned");
-        _earnedGum[owner] = _earnedGum[owner].sub(amountClaimed);
+        _earnedGum[owner] = _earnedGum[owner] - amountClaimed;
     }
 
     //
@@ -290,12 +281,12 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _setProxyRegistryAddress(proxy);
     }
 
-    function depositWrappedEther(uint256 amount) public payable onlyOwner {
+    function depositWrappedEther(uint amount) public payable onlyOwner {
         require(amount == msg.value, "Specified amount does not match actual amount received");
         emit WrappedEtherDeposit(amount);
     }
 
-    function getWrappedEtherDemand() public view onlyOwner returns (uint256) {
+    function getWrappedEtherDemand() public view onlyOwner returns (uint) {
         return _wrappedEtherDemand; // must always be <= supply
     }
 
@@ -303,13 +294,13 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     // Private
     //
 
-    function _combineTokens(uint256 tokenA, uint256 tokenB) private returns (uint256) {
+    function _combineTokens(uint tokenA, uint tokenB) private returns (uint) {
         address owner = ownerOf(tokenA);  // will revert if owner == address(0)
         require(owner == ownerOf(tokenB), "User does not own both Cards");
         require(canCombine(tokenA, tokenB), "Cards are not compatible");
 
         // Mint New Token
-        uint256 newTokenId = _generateCombinedToken(tokenA, tokenB);
+        uint newTokenId = _generateCombinedToken(tokenA, tokenB);
         _mint(owner, newTokenId);
 
         // Burn Old Tokens
@@ -318,100 +309,100 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
         // Emit Event
         emit CardsCombined(owner, tokenA, tokenB, newTokenId);
-
         return newTokenId;
     }
 
-    function _printToken(address owner, uint256 tokenId) private {
+    function _printToken(address owner, uint tokenId) private {
         require(!isTokenPrinted(tokenId), "Card has already been printed");
 
-        // Payout Wrapped Ether
-        _payoutWrappedEther(tokenId);
+        // Store amount of ETH earned from printing
+        uint wrappedEth = _storeEarnedEther(owner, tokenId);
 
-        // GUM is Forfeit for Printed Cards
+        // Store amount of GUM earned from printing
+        uint wrappedGum = _storeEarnedGum(owner, tokenId);
 
         // Mark as Printed
         _printedTokens[tokenId] = true;
 
         // Emit Event
-        emit CardPrinted(owner, tokenId);
+        emit CardPrinted(owner, tokenId, wrappedEth, wrappedGum);
     }
 
-    function _meltToken(uint256 tokenId) private {
+    function _meltToken(uint tokenId) private {
         require(!isTokenPrinted(tokenId), "Cannot melt printed Cards");
-        (address owner, uint wrappedEth) = _getWrappedEtherAmount(tokenId);
+        address owner = ownerOf(tokenId);
+
+        // Store amount of ETH earned from melting
+        uint wrappedEth = _storeEarnedEther(owner, tokenId);
+
+        // Store amount of GUM earned from melting
+        uint wrappedGum = _storeEarnedGum(owner, tokenId);
 
         // Burn Old Token
         _burn(owner, tokenId);
-
-        // Transfer Wrapped Ether
-        _payoutWrappedEther(owner, wrappedEth);
-
-        // Store amount of GUM earned from melting
-        uint wrappedGum = getWrappedGum(tokenId);
-        _earnedGum[owner] = _earnedGum[owner].add(wrappedGum);
 
         // Emit Event
         emit CardMelted(owner, tokenId, wrappedEth, wrappedGum);
     }
 
-    function _getWrappedEtherAmount(uint256 tokenId) private view returns (address, uint256) {
-        address owner = ownerOf(tokenId); // will revert if owner == address(0)
-        uint256 wrappedEth = getWrappedEther(tokenId);
-        // This should never happen, but just in case..
-        require(wrappedEth <= address(this).balance, "Not enough funds to pay out wrapped ether, please try again later.");
-        return (owner, wrappedEth);
+    function _storeEarnedEther(address owner, uint tokenId) private returns (uint) {
+        uint wrappedEth = getWrappedEther(tokenId);
+        _earnedEth[owner] = _earnedEth[owner] + wrappedEth;
+        return wrappedEth;
     }
 
-    function _payoutWrappedEther(uint256 tokenId) private {
-        (address owner, uint wrappedEth) = _getWrappedEtherAmount(tokenId);
-        _payoutWrappedEther(owner, wrappedEth);
+    function _storeEarnedGum(address owner, uint tokenId) private returns (uint) {
+        uint wrappedGum = getWrappedGum(tokenId);
+        _earnedGum[owner] = _earnedGum[owner] + wrappedGum;
+        return wrappedGum;
     }
 
-    function _payoutWrappedEther(address owner, uint wrappedEth) private {
-        if (wrappedEth > 0) {
-            address payable wallet = address(uint160(owner));
-            _wrappedEtherDemand = _wrappedEtherDemand.sub(wrappedEth);
-            wallet.transfer(wrappedEth);
-        }
-    }
-
-    function _generateTokenId(uint[9] memory bits) private pure returns (uint256) {
-        return uint256(bits[0]) | (uint256(bits[1]) << 8) | (uint256(bits[2]) << 16) | (uint256(bits[3]) << 32) | (uint256(bits[4]) << 40) | (uint256(bits[5]) << 52) | (uint256(bits[6]) << 84) | (uint256(bits[7]) << 116) | (uint256(bits[8]) << 148);
-    }
-
-    function _generateCombinedToken(uint256 tokenA, uint256 tokenB) private returns (uint256) {
-        uint y = getYear(tokenA);
-        uint g = getGeneration(tokenA).sub(1);
-        uint r = getRank(tokenA);
-        uint cA = getCombinedCount(tokenA);
-        uint cB = getCombinedCount(tokenB);
-        uint i = _totalIssued[y][g][r].add(1);
+    function _generateCombinedToken(uint tokenA, uint tokenB) private returns (uint) {
+        uint64 y = getYear(tokenA);
+        uint64 g = getGeneration(tokenA) - 1;
+        uint64 r = getRank(tokenA);
+        uint64 i = _totalIssued[y][g][r] + 1;
+        uint64 eth = _getCombinedEtherRaw(tokenA, tokenB);
 
         _totalIssued[y][g][r] = i; // Update Max-Issue for New Token Generation
 
-        uint[9] memory bits = [
-            y, g, r,
-            ((cA > cB ? cB : cA) + 1),
-            0, i,
-            getWrappedGum(tokenA).add(getWrappedGum(tokenB)),
-            _getWrappedEtherRaw(tokenA).add(_getWrappedEtherRaw(tokenB)),
-            getTraits(tokenA) | getTraits(tokenB)
+        uint64[6] memory bits = [
+            y, g, r, i,
+            getWrappedGum(tokenA) + getWrappedGum(tokenB),
+            eth
         ];
         return _generateTokenId(bits);
     }
 
+    function _getCombinedEtherRaw(uint tokenA, uint tokenB) private returns (uint64) {
+        uint64 eA = _getWrappedEtherRaw(tokenA);
+        uint64 eB = _getWrappedEtherRaw(tokenB);
+        uint combined = uint(eA + eB);
+
+        // Check wrapped ether
+        if (combined > 4194304) { // MAX Wrapped Ether
+            uint overage = _convertToEther(combined - 4194304);
+            _storeEarnedEther(ownerOf(tokenA), overage);
+            combined = 4194304;
+        }
+        return uint64(combined);
+    }
+
     // Default 0
-    function _getWrappedEtherRaw(uint256 tokenId) private pure returns (uint) {
-        return uint(_readBits(tokenId, 116, 32));
+    function _getWrappedEtherRaw(uint tokenId) private pure returns (uint64) {
+        return _readBits(tokenId, 42, 22);
     }
 
-    function _traitByIndex(uint256 index) private pure returns (uint256) {
-        return uint256(1 << index);
+    function _convertToEther(uint rawValue) private pure returns (uint) {
+        return rawValue * (1 ether) / 1000000;
     }
 
-    function _readBits(uint num, uint from, uint len) private pure returns (uint) {
+    function _generateTokenId(uint64[6] memory bits) private pure returns (uint) {
+        return uint(bits[0] | (bits[1] << 4) | (bits[2] << 10) | (bits[3] << 20) | (bits[4] << 32) | (bits[5] << 42));
+    }
+
+    function _readBits(uint num, uint from, uint len) private pure returns (uint64) {
         uint mask = ((1 << len) - 1) << from;
-        return (num & mask) >> from;
+        return uint64((num & mask) >> from);
     }
 }

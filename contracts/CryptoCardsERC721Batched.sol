@@ -82,6 +82,10 @@ contract CryptoCardsERC721Batched is ERC721Enumerable {
     // Public
     //
 
+    function getVersion() public pure returns (string memory) {
+        return "v2.1.2";
+    }
+
     function name() external view returns (string memory) {
         return _tokenName;
     }

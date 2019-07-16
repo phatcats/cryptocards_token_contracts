@@ -1,10 +1,11 @@
 {
   "name": "cryptocards_token_contracts",
-  "currentVersion": "1.0.0",
+  "currentVersion": "2.1.2",
   "versionPrefix": "v",
   "filesList": [
     "package.json:package",
     "README.md",
-    "contracts/CryptoCardsERC721.sol"
+    "contracts/CryptoCardsERC721Batched.sol",
+    "contracts/CryptoCardsERC20.sol"
   ]
 }
