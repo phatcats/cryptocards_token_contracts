@@ -9,7 +9,18 @@
  *   - Callisto Security Department - https://callisto.network/
  */
 /*
-    BIT-MAP:
+
+NOTES:
+    - Contract holds ETH for distribution from Card Melting & Printing
+    - Token IDs are bit-mapped to store:
+        - Card Year
+        - Card Generation
+        - Card Rank
+        - Card Issue
+        - Wrapped GUM
+        - Wrapped ETH
+
+TOKEN-ID BIT-MAP:
       E       G    I   R   G  Y
       22      10   12  10  6  4
 [____________|___|____|___|__|_]
@@ -49,9 +60,8 @@ import "./CryptoCardsERC721Batched.sol";
  * ERC721-compliant token representing individual Cards
  */
 contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
-//    uint public constant START_YEAR = 2019;
-//    uint internal constant ETH_DIV = 1000000;
-//    uint internal constant ETH_MAX = 4194304;
+    uint internal constant ETH_DIV = 1000000;
+    uint internal constant ETH_MAX = 4194304;
 
     //
     // Storage
@@ -62,20 +72,9 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     // Tokens that have been printed
     mapping(uint => bool) internal _printedTokens;
 
-    // The amount of ETH earned by an address from melting, combining or printing cards
-    //  - to be paid out by claiming from the DAPP
-    mapping(address => uint) internal _earnedEth;
-
-    // The amount of GUM tokens earned by an address from melting cards
-    //  - to be paid out by claiming from the DAPP
-    mapping(address => uint) internal _earnedGum;
-
     // The amount of ETH wrapped in existing Tokens and not yet paid out
     //  - balance of contract must always be >= than this value
     uint internal _wrappedEtherDemand;
-
-    // GUM Token Controller
-    address internal _cryptoCardsGum;
 
     //
     // Events
@@ -84,14 +83,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     event CardPrinted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum);
     event CardMelted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum);
     event WrappedEtherDeposit(uint amount);
-
-    //
-    // Modifiers
-    //
-    modifier onlyGumController() {
-        require(msg.sender == _cryptoCardsGum, "Action only allowed by CryptoCardsGum contract");
-        _;
-    }
 
     //
     // Initialize
@@ -114,7 +105,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
     // Starts at 0
     function getRank(uint tokenId) public pure returns (uint64) {
-        return _readBits(tokenId, 4, 6);
+        return _readBits(tokenId, 10, 10);
     }
 
     // Starts at 1
@@ -155,38 +146,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         uint32 typeA = uint32(_readBits(tokenA, 0, 20)); // y, g, r
         uint32 typeB = uint32(_readBits(tokenB, 0, 20)); // y, g, r
         return (typeA == typeB);
-    }
-
-    function combine(uint tokenA, uint tokenB) public returns (uint) {
-        require(msg.sender == ownerOf(tokenA), "You do not own one of these Cards"); // tokenB is verified via _combineTokens
-        return _combineTokens(tokenA, tokenB);
-    }
-
-    function melt(uint tokenId) public {
-        require(msg.sender == ownerOf(tokenId), "You do not own this Card");
-        _meltToken(tokenId);
-    }
-
-    function getEarnedGum(address owner) public view returns (uint) {
-        return _earnedGum[owner];
-    }
-
-    function getEarnedEther(address owner) public view returns (uint) {
-        return _earnedEth[owner];
-    }
-
-    function claimEarnedEther() public payable {
-        address payable owner = msg.sender;
-        uint _ether = _earnedEth[owner];
-        require(_ether > 0, "You have not earned any Ether");
-
-        // This should never happen, but just in case..
-        require(_ether <= address(this).balance, "Not enough funds to pay out wrapped ether, please try again later.");
-
-        _wrappedEtherDemand = _wrappedEtherDemand - _ether;
-        _earnedEth[owner] = 0;
-
-        owner.transfer(_ether);
     }
 
 //    function getWrappedEtherSupply() public view returns (uint) {
@@ -232,20 +191,20 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _wrappedEtherDemand = _wrappedEtherDemand + wrappedEth;
     }
 
-    function printFor(address owner, uint tokenId) public onlyMinter {
+    function printFor(address owner, uint tokenId) public onlyMinter returns (uint) {
         require(owner == ownerOf(tokenId), "User does not own this Card");
-        _printToken(owner, tokenId);
+        return _printToken(owner, tokenId);
     }
 
-//    function combineFor(address owner, uint tokenA, uint tokenB) public onlyMinter returns (uint) {
-//        require(owner == ownerOf(tokenA), "User does not own this Card"); // tokenB is verified via _combineTokens
-//        return _combineTokens(tokenA, tokenB);
-//    }
-//
-//    function meltFor(address owner, uint tokenId) public onlyMinter {
-//        require(owner == ownerOf(tokenId), "User does not own this Card");
-//        _meltToken(tokenId);
-//    }
+    function combineFor(address owner, uint tokenA, uint tokenB) public onlyMinter returns (uint) {
+        require(owner == ownerOf(tokenA), "User does not own this Card"); // tokenB is verified via _combineTokens
+        return _combineTokens(tokenA, tokenB);
+    }
+
+    function meltFor(address owner, uint tokenId) public onlyMinter returns (uint) {
+        require(owner == ownerOf(tokenId), "User does not own this Card");
+        return _meltToken(tokenId);
+    }
 
     /* ???????????????????????????? */
     /* QUESTIONABLE for MINTER ROLE */
@@ -255,23 +214,8 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     /* ???????????????????????????? */
 
     //
-    // Only GUM Controller
-    //
-
-    // Gum is Claimed by Owners via the Gum Controller; this function just clears the stored value
-    function claimEarnedGum(address owner, uint amountClaimed) public onlyGumController {
-        require(amountClaimed <= _earnedGum[owner], "Not enough GUM earned");
-        _earnedGum[owner] = _earnedGum[owner] - amountClaimed;
-    }
-
-    //
     // Only Owner
     //
-
-    function setGumController(address gumCtrl) public onlyOwner {
-        require(gumCtrl != address(0), "Invalid address supplied");
-        _cryptoCardsGum = gumCtrl;
-    }
 
     function setBaseTokenURI(string memory uri) public onlyOwner {
         _baseTokenURI = uri;
@@ -299,62 +243,53 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         require(owner == ownerOf(tokenB), "User does not own both Cards");
         require(canCombine(tokenA, tokenB), "Cards are not compatible");
 
-        // Mint New Token
         uint newTokenId = _generateCombinedToken(tokenA, tokenB);
         _mint(owner, newTokenId);
 
-        // Burn Old Tokens
         _burn(owner, tokenA);
         _burn(owner, tokenB);
 
-        // Emit Event
         emit CardsCombined(owner, tokenA, tokenB, newTokenId);
         return newTokenId;
     }
 
-    function _printToken(address owner, uint tokenId) private {
+    function _printToken(address owner, uint tokenId) private returns (uint) {
         require(!isTokenPrinted(tokenId), "Card has already been printed");
 
-        // Store amount of ETH earned from printing
-        uint wrappedEth = _storeEarnedEther(owner, tokenId);
+        uint wrappedGum = getWrappedGum(tokenId);
+        uint wrappedEth = getWrappedEther(tokenId);
 
-        // Store amount of GUM earned from printing
-        uint wrappedGum = _storeEarnedGum(owner, tokenId);
-
-        // Mark as Printed
         _printedTokens[tokenId] = true;
+        _payoutEther(owner, wrappedEth);
 
-        // Emit Event
         emit CardPrinted(owner, tokenId, wrappedEth, wrappedGum);
+        return wrappedGum;
     }
 
-    function _meltToken(uint tokenId) private {
+    function _meltToken(uint tokenId) private returns (uint) {
         require(!isTokenPrinted(tokenId), "Cannot melt printed Cards");
         address owner = ownerOf(tokenId);
 
-        // Store amount of ETH earned from melting
-        uint wrappedEth = _storeEarnedEther(owner, tokenId);
-
-        // Store amount of GUM earned from melting
-        uint wrappedGum = _storeEarnedGum(owner, tokenId);
-
-        // Burn Old Token
-        _burn(owner, tokenId);
-
-        // Emit Event
-        emit CardMelted(owner, tokenId, wrappedEth, wrappedGum);
-    }
-
-    function _storeEarnedEther(address owner, uint tokenId) private returns (uint) {
-        uint wrappedEth = getWrappedEther(tokenId);
-        _earnedEth[owner] = _earnedEth[owner] + wrappedEth;
-        return wrappedEth;
-    }
-
-    function _storeEarnedGum(address owner, uint tokenId) private returns (uint) {
         uint wrappedGum = getWrappedGum(tokenId);
-        _earnedGum[owner] = _earnedGum[owner] + wrappedGum;
+        uint wrappedEth = getWrappedEther(tokenId);
+
+        _burn(owner, tokenId);
+        _payoutEther(owner, wrappedEth);
+
+        emit CardMelted(owner, tokenId, wrappedEth, wrappedGum);
         return wrappedGum;
+    }
+
+    function _payoutEther(address owner, uint256 ethAmount) private returns (uint) {
+        address payable ownerWallet = address(uint160(owner));
+
+        // This should never happen, but just in case..
+        require(ethAmount <= address(this).balance, "Not enough funds to pay out wrapped ether, please try again later.");
+
+        _wrappedEtherDemand = _wrappedEtherDemand - ethAmount;
+
+        ownerWallet.transfer(ethAmount);
+        return ethAmount;
     }
 
     function _generateCombinedToken(uint tokenA, uint tokenB) private returns (uint) {
@@ -380,10 +315,10 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         uint combined = uint(eA + eB);
 
         // Check wrapped ether
-        if (combined > 4194304) { // MAX Wrapped Ether
-            uint overage = _convertToEther(combined - 4194304);
-            _storeEarnedEther(ownerOf(tokenA), overage);
-            combined = 4194304;
+        if (combined > ETH_MAX) { // MAX Wrapped Ether
+            uint overage = _convertToEther(combined - ETH_MAX);
+            _payoutEther(ownerOf(tokenA), overage);
+            combined = ETH_MAX;
         }
         return uint64(combined);
     }
@@ -394,7 +329,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     }
 
     function _convertToEther(uint rawValue) private pure returns (uint) {
-        return rawValue * (1 ether) / 1000000;
+        return rawValue * (1 ether) / ETH_DIV;
     }
 
     function _generateTokenId(uint64[6] memory bits) private pure returns (uint) {

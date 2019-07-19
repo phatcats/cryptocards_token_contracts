@@ -53,10 +53,10 @@ const config = {
             migrator  : '0xeE09F9b736d151732740Db085eD31E59bbFffD15'
         },
         ropsten: {
-            packsCtrl : '0xf4f5b329739acf2d173281135a05a46903dacd6d',
-            cardsCtrl : '0x17927e8b8524ac46c169320b944a5ad4942690ef',
-            gumCtrl   : '0xb1013e7633f78ac2a4815ac1015750a2d9561b2b',
-            migrator  : '0xfd4d884de113d1945737250e83ba8135bf322f90'
+            packsCtrl : '0xe0AEf01e81CFE52Ea5adF2Dab886FCcfe78D467e',
+            cardsCtrl : '0x559cDf997162A1DbB78c748B891586691d181B95',
+            gumCtrl   : '0xD1f1209a7B4AF012A6B84FB0097Be309a11f678C',
+            migrator  : '0x3778C16C84e803247CE5cC53B84e7EEDA3793304'
         },
         mainnet: {
             packsCtrl : '',

@@ -42,7 +42,7 @@ deployFresh() {
 
     echoHeader
     echo "Compiling Contracts.."
-    truffle compile
+    truffle compile --all
 
     echoHeader
     echo "Running Contract Migrations.."
