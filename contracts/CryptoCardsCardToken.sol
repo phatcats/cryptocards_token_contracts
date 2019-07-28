@@ -176,19 +176,15 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         }
     }
 
-    function mintCard(address to, uint tokenId) public onlyMinter {
+    function migrateCards(address to, uint[] memory tokenIds) public onlyMinter {
         // Mint Tokens
-        _mint(to, tokenId);
-
-        uint wrappedEth;
-        (uint64 y, uint64 g, uint64 r) = getTypeIndicators(tokenId);
+        _mintBatch(to, tokenIds);
 
         // Track Total Issued
-        _totalIssued[y][g][r] = _totalIssued[y][g][r] + 1;
-
-        // Track Wrapped Ether (if any)
-        wrappedEth = wrappedEth + getWrappedEther(tokenId);
-        _wrappedEtherDemand = _wrappedEtherDemand + wrappedEth;
+        for (uint i = 0; i < tokenIds.length; i++) {
+            (uint64 y, uint64 g, uint64 r) = getTypeIndicators(tokenIds[i]);
+            _totalIssued[y][g][r] = _totalIssued[y][g][r] + 1;
+        }
     }
 
     function printFor(address owner, uint tokenId) public onlyMinter returns (uint) {

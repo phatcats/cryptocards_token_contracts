@@ -26,17 +26,14 @@ const config = {
 
     networkOptions: {
         local: {
-            oracleApiEndpoint: 'BAUD89qAzoJsLlajETu6INZFbd5GnNfeg6ZTJbe0hq2ltEOctlwLrsDuMTMffqEUMbGoioZEzjDqhu314KVzZFw9/IVnbar5mVxS/mhmSN+NfrDRXW5Sxpsdds+epmMiSJ+URKsSCAAGljpjoesWcukFmU2UPy1apKKU5OpKpGc3AzowXOViIaG4BXG++rWZ1NMv/xVjHQKqSYTHx4qlQAJH94RcZtoQuz4+x0PwJv/RUQ==',
             gas      : 6721975,
             gasPrice : 20000000000          // (20 Gwei)
         },
         ropsten: {
-            oracleApiEndpoint: 'BL5iQLuZFIoMp3mXKb/Nt4C0cq/MDtCB6cZjYxve4bsvWzcvyWjp61XaENaMlc02cvbeK2jAohabMRXhj8q8jw1pFeSx8DQxkmMU0enzCqoxA/VcX2vvxJSuq71RmBTLfqT/+gu4tlHn1y7US2lGMYTCBI23775TkCKpS4c0Qe/KoHfxYAWFsWfcbKr0hcjMihobOJA7k0/8Jb3uaxA9Qf+92I/zQPwKVxY/RSXxdIU=',
             gas      : 8000000,
-            gasPrice : 30000000000          // https://ropsten.etherscan.io/gastracker  (30 Gwei)
+            gasPrice : 30000000000          // https://ropsten.etherscan.io/gastracker
         },
         mainnet: {
-            oracleApiEndpoint: 'BP00gRkhrJdkE9+lyEJmZZcmK1Pq1R6WpyZM1ZislsSxFhGo+YzxSOFT4/a9jfEbFlwKMog53Z6wMzem14mKXfvSQOklp1WpCit2KZ6nmTvGBx/96cpTXvtuH90eZglas5F9qPcv75tqSexG2Yb6zWVIwVV0C0sFXsElfg75Sf9tjyPgqaQuQOGxKhza1SUESziEYDy2onUbM12LBlL7H75nnyAoVpcdiMfGgMEGSrGZnsgM29uIxJmG',
             // For contract deployments
             // gas     : 8000000,           // https://etherscan.io/blocks
             // For contract interactions
@@ -53,10 +50,10 @@ const config = {
             migrator  : '0xeE09F9b736d151732740Db085eD31E59bbFffD15'
         },
         ropsten: {
-            packsCtrl : '0xe0AEf01e81CFE52Ea5adF2Dab886FCcfe78D467e',
-            cardsCtrl : '0x559cDf997162A1DbB78c748B891586691d181B95',
-            gumCtrl   : '0xD1f1209a7B4AF012A6B84FB0097Be309a11f678C',
-            migrator  : '0x3778C16C84e803247CE5cC53B84e7EEDA3793304'
+            packsCtrl : '0xaBcd7DdDcC8c82D3E515c05a9584e4027be6aBB7',
+            cardsCtrl : '0xD1213702A38B08EB0498C54e6859bEadCF9f3bF1',
+            gumCtrl   : '0xb06A8a73eAA6314BF2C762f918c6F21A5145fd3c',
+            migrator  : '0xdeB4eA8EB68B009d3e5fEeCE4769EEc1a64a12f0'
         },
         mainnet: {
             packsCtrl : '',

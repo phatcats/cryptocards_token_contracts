@@ -12,12 +12,14 @@
 freshLoad=
 initialize=
 networkName="local"
+silent=
 
 usage() {
     echo "usage: ./deploy.sh [[-n [local|ropsten|mainnet] [-f]] | [-h]]"
     echo "  -n | --network [local|ropsten|mainnet]    Deploys contracts to the specified network (default is local)"
     echo "  -f | --fresh                              Run all deployments from the beginning, instead of updating"
     echo "  -i | --initialize                         Run Contract Initializations"
+    echo "  -s | --silent                             Suppresses the Beep at the end of the script"
     echo "  -h | --help                               Displays this help screen"
 }
 
@@ -28,7 +30,9 @@ echoHeader() {
 }
 
 echoBeep() {
-    afplay /System/Library/Sounds/Glass.aiff
+    [[ -z "$silent" ]] && {
+        afplay /System/Library/Sounds/Glass.aiff
+    }
 }
 
 deployFresh() {
@@ -62,7 +66,7 @@ runInitializations() {
 }
 
 
-while [ "$1" != "" ]; do
+while [[ "$1" != "" ]]; do
     case $1 in
         -n | --network )        shift
                                 networkName=$1
@@ -70,6 +74,8 @@ while [ "$1" != "" ]; do
         -f | --fresh )          freshLoad="yes"
                                 ;;
         -i | --initialize )     initialize="yes"
+                                ;;
+        -s | --silent )         silent="yes"
                                 ;;
         -h | --help )           usage
                                 exit
@@ -80,9 +86,9 @@ while [ "$1" != "" ]; do
     shift
 done
 
-if [ -n "$freshLoad" ]; then
+if [[ -n "$freshLoad" ]]; then
     deployFresh
-elif [ -n "$initialize" ]; then
+elif [[ -n "$initialize" ]]; then
     runInitializations
 else
     usage

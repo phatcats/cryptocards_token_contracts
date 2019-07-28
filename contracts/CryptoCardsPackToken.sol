@@ -45,7 +45,7 @@ contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //
 
     function mintPack(address to, string memory packData) public onlyMinter returns (uint256) {
-        uint256 tokenId = totalSupply();
+        uint256 tokenId = totalSupply() + 1;
         _mint(to, tokenId);
         _packData[tokenId] = packData;
         return tokenId;
