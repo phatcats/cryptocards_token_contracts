@@ -24,6 +24,7 @@ contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //
     // Storage
     //
+    uint256 internal _totalMintedPacks;
     mapping(uint256 => string) internal _packData;
 
     //
@@ -40,12 +41,17 @@ contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return _packData[tokenId];
     }
 
+    function totalMintedPacks() public view returns (uint256) {
+        return _totalMintedPacks;
+    }
+
     //
     // Only Minter
     //
 
     function mintPack(address to, string memory packData) public onlyMinter returns (uint256) {
-        uint256 tokenId = totalSupply() + 1;
+        _totalMintedPacks = _totalMintedPacks + 1;
+        uint256 tokenId = _totalMintedPacks;
         _mint(to, tokenId);
         _packData[tokenId] = packData;
         return tokenId;
