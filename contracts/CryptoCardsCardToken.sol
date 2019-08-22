@@ -80,7 +80,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     // Events
     //
     event CardsCombined(address indexed owner, uint tokenA, uint tokenB, uint newTokenId);
-    event CardPrinted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum);
+    event CardPrinted(address indexed owner, uint tokenId, uint wrappedEther);
     event CardMelted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum);
     event WrappedEtherDeposit(uint amount);
 
@@ -187,9 +187,9 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         }
     }
 
-    function printFor(address owner, uint tokenId) public onlyMinter returns (uint) {
+    function printFor(address owner, uint tokenId) public onlyMinter {
         require(owner == ownerOf(tokenId), "User does not own this Card");
-        return _printToken(owner, tokenId);
+        _printToken(owner, tokenId);
     }
 
     function combineFor(address owner, uint tokenA, uint tokenB) public onlyMinter returns (uint) {
@@ -204,9 +204,9 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
     /* ???????????????????????????? */
     /* QUESTIONABLE for MINTER ROLE */
-//    function tokenTransfer(address from, address to, uint tokenId) public onlyMinter {
-//        _transferFrom(from, to, tokenId);
-//    }
+    function tokenTransfer(address from, address to, uint tokenId) public onlyMinter {
+        _transferFrom(from, to, tokenId);
+    }
     /* ???????????????????????????? */
 
     //
@@ -249,23 +249,24 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return newTokenId;
     }
 
-    function _printToken(address owner, uint tokenId) private returns (uint) {
+    function _printToken(address owner, uint tokenId) private {
         require(!isTokenPrinted(tokenId), "Card has already been printed");
 
-        uint wrappedGum = getWrappedGum(tokenId);
+        // Gum is forfeit when Printing Cards
+        // Get Wrapped Ether to be Paid
         uint wrappedEth = getWrappedEther(tokenId);
 
         _printedTokens[tokenId] = true;
         _payoutEther(owner, wrappedEth);
 
-        emit CardPrinted(owner, tokenId, wrappedEth, wrappedGum);
-        return wrappedGum;
+        emit CardPrinted(owner, tokenId, wrappedEth);
     }
 
     function _meltToken(uint tokenId) private returns (uint) {
         require(!isTokenPrinted(tokenId), "Cannot melt printed Cards");
         address owner = ownerOf(tokenId);
 
+        // Get Wrapped Ether & Gum to be Paid
         uint wrappedGum = getWrappedGum(tokenId);
         uint wrappedEth = getWrappedEther(tokenId);
 
