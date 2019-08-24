@@ -154,6 +154,9 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
     //
     // Only Minter
+    //   Note: Minter is the Card-Controller Contract, which is the only Minter ever assigned.
+    //         Only the Minter can add new minters, and as the Card-Controller Contract has no code for
+    //         assigning new Minters, no new minters can ever be added.
     //
 
     function mintCardsFromPack(address to, uint[] memory tokenIds) public onlyMinter {
@@ -202,12 +205,9 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return _meltToken(tokenId);
     }
 
-    /* ???????????????????????????? */
-    /* QUESTIONABLE for MINTER ROLE */
     function tokenTransfer(address from, address to, uint tokenId) public onlyMinter {
         _transferFrom(from, to, tokenId);
     }
-    /* ???????????????????????????? */
 
     //
     // Only Owner
