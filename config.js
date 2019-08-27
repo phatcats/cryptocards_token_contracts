@@ -31,7 +31,7 @@ const config = {
         },
         ropsten: {
             gas      : 8000000,
-            gasPrice : 25000000000          // https://ropsten.etherscan.io/gastracker
+            gasPrice : 21000000000          // https://ropsten.etherscan.io/gastracker
         },
         mainnet: {
             // For contract deployments
@@ -50,10 +50,10 @@ const config = {
             migrator  : '0xeE09F9b736d151732740Db085eD31E59bbFffD15'
         },
         ropsten: {
-            packsCtrl : '0x832549DF1C8c321423BfB2255455e2B6EAD0180a',
-            cardsCtrl : '0x36cD8b7793bAe05900B8EcFa02DCEfe1c6239baE',
-            gumCtrl   : '0x59e3c478b4f84Ba07Da16AA5ad184F1253091922',
-            migrator  : '0x64938B9eC3Bb8A3299fEE99ee2F18F61991bfD7e'
+            packsCtrl : '0x1F59D41a2741d7dAdfd04E098FB8D183850fA407',
+            cardsCtrl : '0x44BA53eDF853d974C8F7287aCb139Df9b4cC9f6B',
+            gumCtrl   : '0x53aF23f0D88f07d726595C6834e79a89F76fEA4d',
+            migrator  : '0x088D7321Dd3864c22D589BA6a780792fC7192640'
         },
         mainnet: {
             packsCtrl : '',
