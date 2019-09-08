@@ -66,9 +66,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //
     // Storage
     //
-    // Total Cards Issued by year => gen => rank
-    mapping(uint64 => mapping(uint64 => mapping(uint64 => uint64))) internal _totalIssued;
-
     // Tokens that have been printed
     mapping(uint => bool) internal _printedTokens;
 
@@ -79,9 +76,9 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     //
     // Events
     //
-    event CardsCombined(address indexed owner, uint tokenA, uint tokenB, uint newTokenId);
-    event CardPrinted(address indexed owner, uint tokenId, uint wrappedEther);
-    event CardMelted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum);
+    event CardsCombined(address indexed owner, uint tokenA, uint tokenB, uint newTokenId, bytes16 uuid);
+    event CardPrinted(address indexed owner, uint tokenId, uint wrappedEther, bytes16 uuid);
+    event CardMelted(address indexed owner, uint tokenId, uint wrappedEther, uint wrappedGum, bytes16 uuid);
     event WrappedEtherDeposit(uint amount);
 
     //
@@ -130,11 +127,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return _convertToEther(_getWrappedEtherRaw(tokenId));
     }
 
-    function getTotalIssued(uint tokenId) public view returns (uint64) {
-        (uint64 y, uint64 g, uint64 r) = getTypeIndicators(tokenId);
-        return _totalIssued[y][g][r];
-    }
-
     function isTokenPrinted(uint tokenId) public view returns (bool) {
         return _printedTokens[tokenId];
     }
@@ -163,16 +155,10 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         // Mint Tokens
         _mintBatch(to, tokenIds);
 
+        // Track Wrapped Ether (if any)
         uint totalWrappedEth;
         for (uint i = 0; i < tokenIds.length; i++) {
-            uint t = tokenIds[i];
-            (uint64 y, uint64 g, uint64 r) = getTypeIndicators(t);
-
-            // Track Total Issued
-            _totalIssued[y][g][r] = _totalIssued[y][g][r] + 1;
-
-            // Track Wrapped Ether (if any)
-            totalWrappedEth = totalWrappedEth + getWrappedEther(t);
+            totalWrappedEth = totalWrappedEth + getWrappedEther(tokenIds[i]);
         }
         if (totalWrappedEth > 0) {
             _wrappedEtherDemand = _wrappedEtherDemand + totalWrappedEth;
@@ -182,27 +168,21 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     function migrateCards(address to, uint[] memory tokenIds) public onlyMinter {
         // Mint Tokens
         _mintBatch(to, tokenIds);
-
-        // Track Total Issued
-        for (uint i = 0; i < tokenIds.length; i++) {
-            (uint64 y, uint64 g, uint64 r) = getTypeIndicators(tokenIds[i]);
-            _totalIssued[y][g][r] = _totalIssued[y][g][r] + 1;
-        }
     }
 
-    function printFor(address owner, uint tokenId) public onlyMinter {
+    function printFor(address owner, uint tokenId, bytes16 uuid) public onlyMinter {
         require(owner == ownerOf(tokenId), "User does not own this Card");
-        _printToken(owner, tokenId);
+        _printToken(owner, tokenId, uuid);
     }
 
-    function combineFor(address owner, uint tokenA, uint tokenB) public onlyMinter returns (uint) {
+    function combineFor(address owner, uint tokenA, uint tokenB, uint newIssue, bytes16 uuid) public onlyMinter returns (uint) {
         require(owner == ownerOf(tokenA), "User does not own this Card"); // tokenB is verified via _combineTokens
-        return _combineTokens(tokenA, tokenB);
+        return _combineTokens(tokenA, tokenB, newIssue, uuid);
     }
 
-    function meltFor(address owner, uint tokenId) public onlyMinter returns (uint) {
+    function meltFor(address owner, uint tokenId, bytes16 uuid) public onlyMinter returns (uint) {
         require(owner == ownerOf(tokenId), "User does not own this Card");
-        return _meltToken(tokenId);
+        return _meltToken(tokenId, uuid);
     }
 
     function tokenTransfer(address from, address to, uint tokenId) public onlyMinter {
@@ -234,22 +214,22 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     // Private
     //
 
-    function _combineTokens(uint tokenA, uint tokenB) private returns (uint) {
+    function _combineTokens(uint tokenA, uint tokenB, uint newIssue, bytes16 uuid) private returns (uint) {
         address owner = ownerOf(tokenA);  // will revert if owner == address(0)
         require(owner == ownerOf(tokenB), "User does not own both Cards");
         require(canCombine(tokenA, tokenB), "Cards are not compatible");
 
-        uint newTokenId = _generateCombinedToken(tokenA, tokenB);
+        uint newTokenId = _generateCombinedToken(tokenA, tokenB, newIssue);
         _mint(owner, newTokenId);
 
         _burn(owner, tokenA);
         _burn(owner, tokenB);
 
-        emit CardsCombined(owner, tokenA, tokenB, newTokenId);
+        emit CardsCombined(owner, tokenA, tokenB, newTokenId, uuid);
         return newTokenId;
     }
 
-    function _printToken(address owner, uint tokenId) private {
+    function _printToken(address owner, uint tokenId, bytes16 uuid) private {
         require(!isTokenPrinted(tokenId), "Card has already been printed");
 
         // Gum is forfeit when Printing Cards
@@ -259,10 +239,10 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _printedTokens[tokenId] = true;
         _payoutEther(owner, wrappedEth);
 
-        emit CardPrinted(owner, tokenId, wrappedEth);
+        emit CardPrinted(owner, tokenId, wrappedEth, uuid);
     }
 
-    function _meltToken(uint tokenId) private returns (uint) {
+    function _meltToken(uint tokenId, bytes16 uuid) private returns (uint) {
         require(!isTokenPrinted(tokenId), "Cannot melt printed Cards");
         address owner = ownerOf(tokenId);
 
@@ -273,7 +253,7 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _burn(owner, tokenId);
         _payoutEther(owner, wrappedEth);
 
-        emit CardMelted(owner, tokenId, wrappedEth, wrappedGum);
+        emit CardMelted(owner, tokenId, wrappedEth, wrappedGum, uuid);
         return wrappedGum;
     }
 
@@ -289,17 +269,14 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return ethAmount;
     }
 
-    function _generateCombinedToken(uint tokenA, uint tokenB) private returns (uint) {
+    function _generateCombinedToken(uint tokenA, uint tokenB, uint newIssue) private returns (uint) {
         uint64 y = getYear(tokenA);
         uint64 g = getGeneration(tokenA) - 1;
         uint64 r = getRank(tokenA);
-        uint64 i = _totalIssued[y][g][r] + 1;
         uint64 eth = _getCombinedEtherRaw(tokenA, tokenB);
 
-        _totalIssued[y][g][r] = i; // Update Max-Issue for New Token Generation
-
         uint64[6] memory bits = [
-            y, g, r, i,
+            y, g, r, uint64(newIssue),
             getWrappedGum(tokenA) + getWrappedGum(tokenB),
             eth
         ];
