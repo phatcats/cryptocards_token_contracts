@@ -1,6 +1,6 @@
 {
   "name": "cryptocards_token_contracts",
-  "currentVersion": "2.2.0",
+  "currentVersion": "2.2.1",
   "versionPrefix": "v",
   "filesList": [
     "package.json:package",

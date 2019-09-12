@@ -85,6 +85,16 @@ module.exports = async function(deployer, network, accounts) {
         Lib.log({msg: '-- CryptoCardsGumToken "GUM" --'});
         const cryptoCardsGumToken = await deployer.deploy(CryptoCardsGumToken, _getTxOptions());
 
+
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // Store Contract Addresses for other Scripts
+        const deployedState = Lib.getDeployedAddresses(Lib.network);
+        deployedState.data.packsToken = cryptoCardsPackToken.address;
+        deployedState.data.cardsToken = cryptoCardsCardToken.address;
+        deployedState.data.gumToken   = cryptoCardsGumToken.address;
+        Lib.setDeployedAddresses(deployedState);
+
+
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Deploy Complete
         Lib.log({separator: true});

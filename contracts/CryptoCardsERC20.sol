@@ -30,7 +30,7 @@ contract CryptoCardsERC20 is ERC20 {
     }
 
     function getVersion() public pure returns (string memory) {
-        return "v2.2.0";
+        return "v2.2.1";
     }
 
     /**

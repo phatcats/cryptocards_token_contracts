@@ -63,7 +63,7 @@ contract CryptoCardsERC721Batched is ERC721Enumerable {
     //
 
     function getVersion() public pure returns (string memory) {
-        return "v2.2.0";
+        return "v2.2.1";
     }
 
     function name() external view returns (string memory) {
@@ -97,7 +97,7 @@ contract CryptoCardsERC721Batched is ERC721Enumerable {
         _ownedTokensCount[from] = _ownedTokensCount[from].sub(tokenIds.length);
         _ownedTokensCount[to] = _ownedTokensCount[to].add(tokenIds.length);
 
-        emit BatchTransfer(from, to, tokenIds);
+//        emit BatchTransfer(from, to, tokenIds);
     }
 
     function isApprovedForAll(address owner, address operator) public view returns (bool) {
@@ -127,7 +127,7 @@ contract CryptoCardsERC721Batched is ERC721Enumerable {
 
         _ownedTokensCount[to] = _ownedTokensCount[to].add(tokenIds.length);
 
-        emit BatchTransfer(address(0x0), to, tokenIds);
+//        emit BatchTransfer(address(0x0), to, tokenIds);
     }
 
     function uint2str(uint _i) private pure returns (string memory _uintAsString) {

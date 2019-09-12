@@ -221,7 +221,6 @@ contract ERC721 is ERC165, IERC721 {
 
     /**
      * @dev Internal function to mint a new token
-     * Reverts if the given token ID already exists
      * @param to The address that will own the minted token
      * @param tokenId uint256 ID of the token to be minted
      */
@@ -229,6 +228,7 @@ contract ERC721 is ERC165, IERC721 {
         if (_tokenOwner[tokenId] == address(0)) {
             _tokenOwner[tokenId] = to;
         }
+        emit Transfer(address(0), to, tokenId); // to maintain compliance with token trackers (ie. etherscan)
     }
 
     /**
@@ -290,6 +290,7 @@ contract ERC721 is ERC165, IERC721 {
         require(ownerOf(tokenId) == from);
         _clearApproval(tokenId);
         _tokenOwner[tokenId] = to;
+        emit Transfer(from, to, tokenId); // to maintain compliance with token trackers (ie. etherscan)
     }
 
     /**

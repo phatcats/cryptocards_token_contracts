@@ -8,6 +8,7 @@
 'use strict';
 
 const _ = require('lodash');
+const fs = require('fs');
 
 const Lib = {};
 
@@ -63,6 +64,31 @@ Lib.logTxResult = (result) => {
 Lib.delay = (timeout) => new Promise((resolve) => {
     setTimeout(() => { resolve(); }, timeout);
 });
+
+Lib.readStateFile = (stateObj = {filename: '', data: {}}) => {
+    if (_.isEmpty(_.get(stateObj, 'filename', ''))) {
+        throw new Error('No "filename" provided on "stateObj" when calling "Lib.readStateFile"');
+    }
+    if (!fs.existsSync(stateObj.filename)) {
+        Lib.writeStateFile(stateObj);
+    }
+    _.set(stateObj, 'data', JSON.parse(fs.readFileSync(stateObj.filename, 'utf-8')));
+};
+
+Lib.writeStateFile = (stateObj) => {
+    return fs.writeFileSync(stateObj.filename, JSON.stringify(stateObj.data));
+};
+
+Lib.getDeployedAddresses = (network) => {
+    // Store in parent dir so that other repos can read it
+    const stateObj = {filename: `../contract-addresses-${network}.json`, data: {}};
+    Lib.readStateFile(stateObj);
+    return stateObj;
+};
+
+Lib.setDeployedAddresses = (deployState) => {
+    return Lib.writeStateFile(deployState);
+};
 
 Lib.getContractInstance = (contract, contractAddress) => {
     // Dirty hack for web3@1.0.0 support for localhost testrpc,

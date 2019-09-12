@@ -27,39 +27,21 @@ const config = {
     networkOptions: {
         local: {
             gas      : 6721975,
-            gasPrice : 20000000000          // (20 Gwei)
+            gasPrice : 20 * 1e8
         },
         ropsten: {
-            gas      : 8000000,
-            gasPrice : 33000000000          // https://ropsten.etherscan.io/gastracker
+            // For contract deployments
+            // gas                : 8000000,  // https://ropsten.etherscan.io/blocks
+            // For contract interactions
+            gas      : 1000000,
+            gasPrice : 20 * 1e8             // https://ropsten.etherscan.io/gastracker
         },
         mainnet: {
             // For contract deployments
             // gas     : 8000000,           // https://etherscan.io/blocks
             // For contract interactions
             gas      : 1000000,             // https://etherscan.io/blocks
-            gasPrice : 1000000000           // https://etherscan.io/gastracker  (1 Gwei)
-        }
-    },
-
-    contractAddresses: {
-        local: {
-            packsCtrl : '0xA51A7dD583669a958059362dF2601197d8eE3B39',
-            cardsCtrl : '0xfBb58f952c6e86DA1719c5257b89E6C07B78c23f',
-            gumCtrl   : '0x22BB50A434E82716773cFF9306c9F1D2FB65bFBC',
-            migrator  : '0xeE09F9b736d151732740Db085eD31E59bbFffD15'
-        },
-        ropsten: {
-            packsCtrl : '0xF3B77547AFB0CeaECC102C3955D375626f24A873',
-            cardsCtrl : '0x0956db35a22e014E71Cc73F310c49BeB42665c82',
-            gumCtrl   : '0x7Ea4EDEE5347DFF0e63dA01F325FF67aA044e828',
-            migrator  : '0x8F5366e55F75f525b81468458e8B48759Fe88638'
-        },
-        mainnet: {
-            packsCtrl : '',
-            cardsCtrl : '',
-            gumCtrl   : '',
-            migrator  : ''
+            gasPrice : 2 * 1e8              // https://etherscan.io/gastracker
         }
     },
 

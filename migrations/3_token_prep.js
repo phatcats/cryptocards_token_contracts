@@ -14,7 +14,7 @@ global.artifacts = artifacts;
 global.web3 = web3;
 
 const { Lib } = require('./common');
-const { networkOptions, contractAddresses } = require('../config');
+const { networkOptions } = require('../config');
 const _ = require('lodash');
 
 const CryptoCardsPackToken = artifacts.require('CryptoCardsPackToken');
@@ -34,7 +34,10 @@ module.exports = async function(deployer, network, accounts) {
 
     const owner = accounts[0];
     const options = networkOptions[Lib.network];
-    const contractAddress = contractAddresses[Lib.network];
+
+    // Get Contract Addresses
+    const deployedState = Lib.getDeployedAddresses(Lib.network);
+    const contractAddress = _.get(deployedState, 'data', {});
 
     const _getTxOptions = () => {
         return {from: owner, nonce: nonce++, gasPrice: options.gasPrice};
@@ -72,8 +75,8 @@ module.exports = async function(deployer, network, accounts) {
         // Set Packs Minter
         Lib.log({spacer: true});
         Lib.log({msg: '-- Add Pack Token-Minter --'});
-        Lib.log({msg: `Packs Contract Address: ${contractAddress.packsCtrl}`, indent: 1});
-        receipt = await cryptoCardsPackToken.addMinter(contractAddress.packsCtrl, _getTxOptions());
+        Lib.log({msg: `Packs Contract Address: ${contractAddress.packs}`, indent: 1});
+        receipt = await cryptoCardsPackToken.addMinter(contractAddress.packs, _getTxOptions());
         Lib.logTxResult(receipt);
         Lib.log({msg: `Migrator Contract Address: ${contractAddress.migrator}`, indent: 1});
         receipt = await cryptoCardsPackToken.addMinter(contractAddress.migrator, _getTxOptions());
@@ -83,11 +86,11 @@ module.exports = async function(deployer, network, accounts) {
         // Set Cards Minter
         Lib.log({spacer: true});
         Lib.log({msg: '-- Add Card Token-Minter --'});
-        Lib.log({msg: `Packs Contract Address: ${contractAddress.packsCtrl}`, indent: 1});
-        receipt = await cryptoCardsCardToken.addMinter(contractAddress.packsCtrl, _getTxOptions());
+        Lib.log({msg: `Packs Contract Address: ${contractAddress.packs}`, indent: 1});
+        receipt = await cryptoCardsCardToken.addMinter(contractAddress.packs, _getTxOptions());
         Lib.logTxResult(receipt);
-        Lib.log({msg: `Cards Contract Address: ${contractAddress.cardsCtrl}`, indent: 1});
-        receipt = await cryptoCardsCardToken.addMinter(contractAddress.cardsCtrl, _getTxOptions());
+        Lib.log({msg: `Cards Contract Address: ${contractAddress.cards}`, indent: 1});
+        receipt = await cryptoCardsCardToken.addMinter(contractAddress.cards, _getTxOptions());
         Lib.logTxResult(receipt);
         Lib.log({msg: `Migrator Contract Address: ${contractAddress.migrator}`, indent: 1});
         receipt = await cryptoCardsCardToken.addMinter(contractAddress.migrator, _getTxOptions());
