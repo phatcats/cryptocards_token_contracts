@@ -27,21 +27,21 @@ const config = {
     networkOptions: {
         local: {
             gas      : 6721975,
-            gasPrice : 20 * 1e8
+            gasPrice : 20e9
         },
         ropsten: {
             // For contract deployments
-            // gas                : 8000000,  // https://ropsten.etherscan.io/blocks
+            // gas      : 8000000,             // https://ropsten.etherscan.io/blocks
             // For contract interactions
             gas      : 1000000,
-            gasPrice : 20 * 1e8             // https://ropsten.etherscan.io/gastracker
+            gasPrice : 27e9                 // https://ropsten.etherscan.io/gastracker
         },
         mainnet: {
             // For contract deployments
             // gas     : 8000000,           // https://etherscan.io/blocks
             // For contract interactions
             gas      : 1000000,             // https://etherscan.io/blocks
-            gasPrice : 2 * 1e8              // https://etherscan.io/gastracker
+            gasPrice : 2e9                  // https://etherscan.io/gastracker
         }
     },
 
