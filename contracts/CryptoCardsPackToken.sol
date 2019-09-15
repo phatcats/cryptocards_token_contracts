@@ -4,9 +4,6 @@
  *  - https://phatcats.co
  *
  * Copyright 2019 (c) Phat Cats, Inc.
- *
- * Contract Audits:
- *   - Callisto Security Department - https://callisto.network/
  */
 
 pragma solidity 0.5.0;
@@ -47,6 +44,9 @@ contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
 
     //
     // Only Minter
+    //   Note: Minter is the Pack-Controller Contract, which is the only Minter ever assigned.
+    //         Only the Minter can add new minters, and as the Pack-Controller Contract has no code for
+    //         assigning new Minters, no new minters can ever be added.
     //
 
     function mintPack(address to, string memory packData) public onlyMinter returns (uint256) {
@@ -56,10 +56,6 @@ contract CryptoCardsPackToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         _packData[tokenId] = packData;
         return tokenId;
     }
-
-//    function mintPacks(address to, uint256[] memory tokenIds) public onlyMinter {
-//        _mintBatch(to, tokenIds);
-//    }
 
     function burnPack(address from, uint256 tokenId) public onlyMinter {
         _burn(from, tokenId);

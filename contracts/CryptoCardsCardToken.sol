@@ -4,12 +4,8 @@
  *  - https://phatcats.co
  *
  * Copyright 2019 (c) Phat Cats, Inc.
- *
- * Contract Audits:
- *   - Callisto Security Department - https://callisto.network/
  */
 /*
-
 NOTES:
     - Contract holds ETH for distribution from Card Melting & Printing
     - Token IDs are bit-mapped to store:
@@ -140,10 +136,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return (typeA == typeB);
     }
 
-//    function getWrappedEtherSupply() public view returns (uint) {
-//        return address(this).balance; // must always be >= demand
-//    }
-
     //
     // Only Minter
     //   Note: Minter is the Card-Controller Contract, which is the only Minter ever assigned.
@@ -166,7 +158,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
     }
 
     function migrateCards(address to, uint[] memory tokenIds) public onlyMinter {
-        // Mint Tokens
         _mintBatch(to, tokenIds);
     }
 
@@ -297,7 +288,6 @@ contract CryptoCardsCardToken is CryptoCardsERC721Batched, MinterRole, Ownable {
         return uint64(combined);
     }
 
-    // Default 0
     function _getWrappedEtherRaw(uint tokenId) private pure returns (uint64) {
         return _readBits(tokenId, 42, 22);
     }
