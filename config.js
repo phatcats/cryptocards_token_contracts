@@ -38,10 +38,10 @@ const config = {
         },
         mainnet: {
             // For contract deployments
-            // gas     : 8000000,           // https://etherscan.io/blocks
+            // gas     : 6500000,           // https://etherscan.io/blocks
             // For contract interactions
             gas      : 1000000,             // https://etherscan.io/blocks
-            gasPrice : 2e9                  // https://etherscan.io/gastracker
+            gasPrice : 21e9                  // https://etherscan.io/gastracker
         }
     },
 
@@ -51,6 +51,10 @@ const config = {
             rinkby: '0xf57b2c51ded3a29e6891aba85459d600256cf317',
             mainnet: '0xa5409ec958c83c3f309868babaca7c86dcb077c1'
         }
+    },
+
+    etherscan: {
+        apiKey: process.env.ETHERSCAN_API_KEY
     }
 };
 

@@ -13,7 +13,10 @@
   },
   "scripts": {
     "test": "truffle test",
-    "merge-all": "sol-merger \"./contracts/*.sol\" ./merged"
+    "merge-all": "sol-merger \"./contracts/*.sol\" ./merged",
+    "verify-packs": "truffle run verify CryptoCardsPackToken --network mainnet",
+    "verify-cards": "truffle run verify CryptoCardsCardToken --network mainnet",
+    "verify-gum": "truffle run verify CryptoCardsGumToken --network mainnet"
   },
   "dependencies": {
     "fs": "0.0.1-security",
@@ -26,6 +29,7 @@
     "ethereumjs-wallet": "^0.6.2",
     "lodash": "^4.17.14",
     "sol-merger": "^0.1.4",
-    "truffle-hdwallet-provider": "^1.0.14"
+    "truffle-hdwallet-provider": "^1.0.14",
+    "truffle-plugin-verify": "^0.3.3"
   }
 }

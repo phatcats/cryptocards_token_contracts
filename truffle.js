@@ -9,7 +9,7 @@
 require('dotenv').config();
 
 const HDWalletProvider = require("truffle-hdwallet-provider");
-const { wallets, networkOptions } = require('./config');
+const { wallets, networkOptions, etherscan } = require('./config');
 const walletMnemonicType = 'owner';
 
 const options = {
@@ -62,6 +62,15 @@ const options = {
             gasPrice: 21,
             showTimeSpent: true
         }
+    },
+    plugins: [
+        'truffle-plugin-verify'
+    ],
+    verify: {
+        preamble: 'Crypto-Cards by Phat-Cats Inc., Copyright 2019'
+    },
+    api_keys: {
+        etherscan: etherscan.apiKey
     }
 };
 
