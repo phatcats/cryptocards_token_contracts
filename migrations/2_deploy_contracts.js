@@ -34,8 +34,8 @@ module.exports = async function(deployer, network, accounts) {
     const options = networkOptions[Lib.network];
     const proxyRegistryAddress = opensea.proxyRegistryAddress[Lib.network] || '';
 
-    const _getTxOptions = () => {
-        return {from: owner, nonce: nonce++, gasPrice: options.gasPrice};
+    const _getTxOptions = (options = {}) => {
+        return _.assignIn({from: owner, nonce: nonce++, gasPrice: options.gasPrice}, options);
     };
 
     Lib.log({msg: `Network:   ${Lib.network}`});
@@ -85,6 +85,16 @@ module.exports = async function(deployer, network, accounts) {
         Lib.log({msg: '-- CryptoCardsGumToken "GUM" --'});
         const cryptoCardsGumToken = await deployer.deploy(CryptoCardsGumToken, _getTxOptions());
 
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        // Deposit Wrapped Ether
+        if (Lib.network === 'local') {
+            const wrappedEth = web3.utils.toWei('1.5');
+            Lib.log({spacer: true});
+            Lib.log({msg: '-- Deposit Wrapped Ether --'});
+            Lib.log({msg: `Wrapped Ether Amount: ${wrappedEth} WEI`, indent: 1});
+            const receipt = await cryptoCardsCardToken.depositWrappedEther(wrappedEth, _getTxOptions({value: wrappedEth}));
+            Lib.logTxResult(receipt);
+        }
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // Store Contract Addresses for other Scripts
