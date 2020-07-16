@@ -27,7 +27,7 @@
     "dotenv": "^8.0.0",
     "eth-gas-reporter": "^0.2.6",
     "ethereumjs-wallet": "^0.6.2",
-    "lodash": "^4.17.14",
+    "lodash": "^4.17.19",
     "sol-merger": "^0.1.4",
     "truffle-hdwallet-provider": "^1.0.14",
     "truffle-plugin-verify": "^0.3.3"
